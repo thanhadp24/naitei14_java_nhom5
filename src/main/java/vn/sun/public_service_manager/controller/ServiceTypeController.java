@@ -7,15 +7,17 @@ import org.springframework.web.bind.annotation.*;
 import vn.sun.public_service_manager.dto.ServiceTypeDTO;
 import vn.sun.public_service_manager.dto.ServiceTypePageResponse;
 import vn.sun.public_service_manager.service.ServiceTypeService;
+import vn.sun.public_service_manager.utils.annotation.ApiMessage;
 
 @RestController
-@RequestMapping("/api/service-types")
+@RequestMapping("/api/v1/service-types")
 public class ServiceTypeController {
     
     @Autowired
     private ServiceTypeService serviceTypeService;
     
     @GetMapping
+    @ApiMessage("Lấy danh sách dịch vụ thành công")
     public ResponseEntity<ServiceTypePageResponse> getAllServiceTypes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,6 +29,7 @@ public class ServiceTypeController {
     }
     
     @GetMapping("/search")
+    @ApiMessage("Tìm kiếm dịch vụ thành công")
     public ResponseEntity<ServiceTypePageResponse> searchServiceTypes(
             @RequestParam String name,
             @RequestParam(defaultValue = "0") int page,
@@ -37,6 +40,7 @@ public class ServiceTypeController {
     }
     
     @GetMapping("/{id}")
+    @ApiMessage("Lấy chi tiết dịch vụ thành công")
     public ResponseEntity<?> getServiceTypeById(@PathVariable Long id) {
         try {
             ServiceTypeDTO serviceTypeDTO = serviceTypeService.getServiceTypeById(id);

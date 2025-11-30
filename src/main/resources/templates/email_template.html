@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận nộp hồ sơ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 16px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 150px;
+        }
+
+        .info-value {
+            color: #212529;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background-color: #28a745;
+            color: #ffffff;
+        }
+
+        .files-section {
+            margin: 20px 0;
+        }
+
+        .files-section h3 {
+            color: #333333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .file-name {
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .next-steps {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .next-steps h3 {
+            color: #856404;
+            margin-top: 0;
+            font-size: 16px;
+        }
+
+        .next-steps ol {
+            color: #856404;
+            margin: 10px 0 0 20px;
+            padding: 0;
+        }
+
+        .next-steps li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .contact-info {
+            margin: 15px 0;
+            color: #495057;
+        }
+
+        .social-links {
+            margin: 15px 0;
+        }
+
+        .social-links a {
+            display: inline-block;
+            margin: 0 5px;
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>✓ Xác nhận nộp hồ sơ</h1>
+            <p>Hệ thống quản lý dịch vụ công</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">
+                Xin chào <strong th:text="${name}">Nguyễn Văn A</strong>,
+            </p>
+
+            <p>
+                Chúng tôi đã nhận được hồ sơ đăng ký của bạn. Dưới đây là thông tin chi tiết:
+            </p>
+
+            <!-- Application Info -->
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Mã hồ sơ:</span>
+                    <span class="info-value" th:text="${applicationInfo.applicationCode}">APP-2025-001</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dịch vụ:</span>
+                    <span class="info-value" th:text="${applicationInfo.serviceName}">Đăng ký khám bệnh</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Thời gian nộp:</span>
+                    <span class="info-value" th:text="${applicationInfo.submittedAt}">30/11/2025 10:30 AM</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Trạng thái:</span>
+                    <span class="status-badge">Đã tiếp nhận</span>
+                </div>
+            </div>
+
+            <!-- Files List -->
+            <!-- <div class="files-section" th:if="${files != null && !files.isEmpty()}">
+                <h3>📎 Tài liệu đính kèm (<span th:text="${files.size()}">3</span> file)</h3>
+                <div th:each="file : ${files}" class="file-item">
+                    <svg class="file-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                    </svg>
+                    <span class="file-name" th:text="${file}">document.pdf</span>
+                </div>
+            </div> -->
+
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h3>📋 Các bước tiếp theo</h3>
+                <ol>
+                    <li>Hồ sơ của bạn đang được xem xét bởi nhân viên phụ trách</li>
+                    <li>Thời gian xử lý dự kiến: <strong th:text="${processingTime}">3-5 ngày làm việc</strong></li>
+                    <li>Bạn sẽ nhận được thông báo qua email khi có cập nhật</li>
+                    <li>Có thể tra cứu trạng thái hồ sơ bằng mã hồ sơ</li>
+                </ol>
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="#" th:href="@{${trackingUrl}}" class="button">
+                    Theo dõi hồ sơ
+                </a>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="contact-info">
+                <p><strong>Cần hỗ trợ?</strong></p>
+                <p>📞 Hotline: <a href="tel:1900xxxx" style="color: #667eea;">1900 xxxx</a></p>
+                <p>📧 Email: <a href="mailto:support@example.com" style="color: #667eea;">support@example.com</a></p>
+                <p>🌐 Website: <a href="https://example.com" style="color: #667eea;">https://example.com</a></p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Hệ thống quản lý dịch vụ công</strong></p>
+            <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP. Hà Nội</p>
+            <p style="margin-top: 15px; font-size: 11px; color: #868e96;">
+                Email này được gửi tự động, vui lòng không trả lời.<br>
+                © 2025 Public Service Manager. All rights reserved.
+            </p>
+
+            <div class="social-links">
+                <a href="#">Facebook</a> |
+                <a href="#">Zalo</a> |
+                <a href="#">Website</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

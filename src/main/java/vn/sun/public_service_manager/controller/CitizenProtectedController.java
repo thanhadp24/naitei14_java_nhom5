@@ -1,24 +1,60 @@
 package vn.sun.public_service_manager.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+import vn.sun.public_service_manager.dto.CitizenProfileResponse;
+import vn.sun.public_service_manager.dto.CitizenProfileUpdateRequest;
+import vn.sun.public_service_manager.dto.ChangePasswordRequest;
+import vn.sun.public_service_manager.service.CitizenService;
+
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/citizen")
+@RequestMapping("/api/v1/citizen")
+@RequiredArgsConstructor
 public class CitizenProtectedController {
 
-    // 4. API được bảo vệ (Chỉ cho phép người dùng có vai trò CITIZEN)
-    @PreAuthorize("hasRole('CITIZEN')")
-    @GetMapping("/profile")
-    public ResponseEntity<String> getCitizenProfile() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    private final CitizenService citizenService;
 
-        // auth.getName() là nationalId của Citizen đã đăng nhập
-        return ResponseEntity.ok("Welcome, Citizen! Your National ID (from token) is: " + auth.getName());
+    private String getNationalId(UserDetails userDetails) {
+        return userDetails.getUsername();
+    }
+
+    @PreAuthorize("hasRole('CITIZEN')")
+    @GetMapping("/me")
+    public ResponseEntity<CitizenProfileResponse> getProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String nationalId = getNationalId(userDetails);
+
+        CitizenProfileResponse profile = citizenService.getProfile(nationalId);
+        return ResponseEntity.ok(profile);
+    }
+
+    @PreAuthorize("hasRole('CITIZEN')")
+    @PutMapping("/update")
+    public ResponseEntity<CitizenProfileResponse> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CitizenProfileUpdateRequest request) {
+
+        String nationalId = getNationalId(userDetails);
+        CitizenProfileResponse updatedProfile = citizenService.updateProfile(nationalId, request);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+    @PreAuthorize("hasRole('CITIZEN')")
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        String nationalId = getNationalId(userDetails);
+        citizenService.changePassword(nationalId, request);
+
+        return ResponseEntity.ok("Mật khẩu đã được thay đổi thành công.");
     }
 }

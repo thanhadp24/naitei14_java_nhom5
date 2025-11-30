@@ -18,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/citizen/auth")
+@RequestMapping("/api/v1/citizen/auth")
 public class CitizenAuthController {
 
     @Autowired

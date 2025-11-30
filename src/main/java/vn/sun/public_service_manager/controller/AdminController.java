@@ -1,6 +1,6 @@
 package vn.sun.public_service_manager.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -57,5 +57,24 @@ public class AdminController {
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
         return "redirect:/admin/login?logout";
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public String userManagement(Model model, Authentication authentication) {
+        model.addAttribute("username", authentication.getName());
+        return "admin/user_management";
+    }
+
+    @GetMapping("/users/{id}/detail")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public String userDetail(@org.springframework.web.bind.annotation.PathVariable Long id,
+                            @RequestParam String type,
+                            Model model,
+                            Authentication authentication) {
+        model.addAttribute("username", authentication.getName());
+        model.addAttribute("userId", id);
+        model.addAttribute("userType", type);
+        return "admin/user_detail";
     }
 }

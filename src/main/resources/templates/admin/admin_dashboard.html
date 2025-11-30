@@ -32,12 +32,14 @@
                         <p>Vai trò của bạn: <span th:text="${roles}"></span></p>
                         <div class="row">
                             <div class="col-md-4">
-                                <div class="card text-white bg-success mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Quản lý người dùng</h5>
-                                        <p class="card-text">Thêm, sửa, xóa tài khoản admin và staff</p>
+                                <a href="/admin/users" class="text-decoration-none">
+                                    <div class="card text-white bg-success mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-people-fill"></i> Quản lý người dùng</h5>
+                                            <p class="card-text">Xem danh sách, thêm, sửa, xóa tài khoản admin và staff</p>
+                                        </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                             <div class="col-md-4">
                                 <div class="card text-white bg-info mb-3">

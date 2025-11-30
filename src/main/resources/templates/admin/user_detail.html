@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết người dùng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    Xin chào, <span th:text="${username}">Admin</span>!
+                </span>
+                <form th:action="@{/admin/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-person-circle"></i> Chi tiết người dùng</h5>
+                        <a href="/admin/users" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <!-- Loading -->
+                        <div id="loading" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Error Alert -->
+                        <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+
+                        <!-- User Detail Content -->
+                        <div id="userDetailContent" style="display: none;">
+                            <div class="row">
+                                <!-- Left Column: Basic Info -->
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Thông tin cơ bản</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless">
+                                                <tbody>
+                                                    <tr>
+                                                        <th width="40%">ID:</th>
+                                                        <td id="userId"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Loại tài khoản:</th>
+                                                        <td id="userType"></td>
+                                                    </tr>
+                                                    <tr id="usernameRow" style="display: none;">
+                                                        <th>Username:</th>
+                                                        <td id="username"></td>
+                                                    </tr>
+                                                    <tr id="nationalIdRow" style="display: none;">
+                                                        <th>CMND/CCCD:</th>
+                                                        <td id="nationalId"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Họ và tên:</th>
+                                                        <td id="fullName"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Email:</th>
+                                                        <td id="email"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Số điện thoại:</th>
+                                                        <td id="phone"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Địa chỉ:</th>
+                                                        <td id="address"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Additional Info -->
+                                <div class="col-md-6">
+                                    <!-- User Specific Info -->
+                                    <div class="card mb-3" id="userSpecificCard" style="display: none;">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0"><i class="bi bi-shield-check"></i> Thông tin nhân viên</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless">
+                                                <tbody>
+                                                    <tr>
+                                                        <th width="40%">Vai trò:</th>
+                                                        <td id="roles"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Phòng ban:</th>
+                                                        <td id="departmentName"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Trạng thái:</th>
+                                                        <td id="activeStatus"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Citizen Specific Info -->
+                                    <div class="card mb-3" id="citizenSpecificCard" style="display: none;">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="bi bi-person-badge"></i> Thông tin công dân</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless">
+                                                <tbody>
+                                                    <tr>
+                                                        <th width="40%">Ngày sinh:</th>
+                                                        <td id="dateOfBirth"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Giới tính:</th>
+                                                        <td id="gender"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Timestamps -->
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h6 class="mb-0"><i class="bi bi-clock-history"></i> Thông tin hệ thống</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless">
+                                                <tbody>
+                                                    <tr>
+                                                        <th width="40%">Ngày tạo:</th>
+                                                        <td id="createdAt"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        const userId = /*[[${userId}]]*/ '';
+        const userType = /*[[${userType}]]*/ '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserDetail();
+        });
+
+        function loadUserDetail() {
+            fetch(`/api/v1/admin/users/${userId}?type=${userType}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Không thể tải thông tin người dùng');
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    console.log('User Detail:', response);
+                    // API có wrapper {data, message, status}
+                    const user = response.data ? response.data : response;
+                    displayUserDetail(user);
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('errorAlert').textContent = error.message;
+                    document.getElementById('errorAlert').style.display = 'block';
+                });
+        }
+
+        function displayUserDetail(user) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('userDetailContent').style.display = 'block';
+
+            // Basic Info
+            document.getElementById('userId').textContent = user.id || '-';
+            document.getElementById('fullName').textContent = user.fullName || '-';
+            document.getElementById('email').textContent = user.email || '-';
+            document.getElementById('phone').textContent = user.phone || '-';
+            document.getElementById('address').textContent = user.address || '-';
+
+            // Type Badge
+            const typeBadge = user.type === 'USER' 
+                ? '<span class="badge bg-primary">Nhân viên</span>'
+                : '<span class="badge bg-info">Công dân</span>';
+            document.getElementById('userType').innerHTML = typeBadge;
+
+            // Timestamps
+            const createdAt = user.createdAt ? new Date(user.createdAt).toLocaleString('vi-VN') : '-';
+            document.getElementById('createdAt').textContent = createdAt;
+
+            // Type Specific Info
+            if (user.type === 'USER') {
+                document.getElementById('usernameRow').style.display = 'table-row';
+                document.getElementById('username').textContent = user.username || '-';
+                
+                document.getElementById('userSpecificCard').style.display = 'block';
+                
+                // Roles
+                const roles = user.roles && user.roles.length > 0
+                    ? user.roles.map(r => `<span class="badge bg-success">${r}</span>`).join(' ')
+                    : '-';
+                document.getElementById('roles').innerHTML = roles;
+                
+                document.getElementById('departmentName').textContent = user.departmentName || '-';
+                
+                const activeStatus = user.active === true
+                    ? '<span class="badge bg-success">Đang hoạt động</span>'
+                    : '<span class="badge bg-danger">Không hoạt động</span>';
+                document.getElementById('activeStatus').innerHTML = activeStatus;
+            } else if (user.type === 'CITIZEN') {
+                document.getElementById('nationalIdRow').style.display = 'table-row';
+                document.getElementById('nationalId').textContent = user.nationalId || '-';
+                
+                document.getElementById('citizenSpecificCard').style.display = 'block';
+                
+                const dob = user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('vi-VN') : '-';
+                document.getElementById('dateOfBirth').textContent = dob;
+                
+                const genderMap = {
+                    'MALE': 'Nam',
+                    'FEMALE': 'Nữ',
+                    'OTHER': 'Khác'
+                };
+                document.getElementById('gender').textContent = genderMap[user.gender] || user.gender || '-';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý người dùng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    Xin chào, <span th:text="${username}">Admin</span>!
+                </span>
+                <form th:action="@{/admin/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-people-fill"></i> Quản lý người dùng</h5>
+                        <a href="/admin/dashboard" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Loại người dùng</label>
+                                <select class="form-select" id="filterType">
+                                    <option value="ALL">Tất cả</option>
+                                    <option value="USER">Nhân viên (User)</option>
+                                    <option value="CITIZEN">Công dân (Citizen)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Vai trò</label>
+                                <select class="form-select" id="filterRole">
+                                    <option value="">Tất cả</option>
+                                    <option value="ROLE_ADMIN">Admin</option>
+                                    <option value="ROLE_STAFF">Staff</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-select" id="filterActive">
+                                    <option value="">Tất cả</option>
+                                    <option value="true">Đang hoạt động</option>
+                                    <option value="false">Không hoạt động</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tìm kiếm</label>
+                                <input type="text" class="form-control" id="filterSearch" placeholder="Tên, email, phone...">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <button class="btn btn-primary" onclick="loadUsers()">
+                                    <i class="bi bi-search"></i> Tìm kiếm
+                                </button>
+                                <button class="btn btn-secondary" onclick="resetFilters()">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loading" class="text-center" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Error Alert -->
+                        <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+
+                        <!-- Users Table -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Loại</th>
+                                        <th>Tên</th>
+                                        <th>Email</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Vai trò</th>
+                                        <th>Phòng ban</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav>
+                            <ul class="pagination justify-content-center" id="pagination">
+                                <!-- Pagination buttons will be loaded here -->
+                            </ul>
+                        </nav>
+
+                        <!-- Stats -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <strong>Tổng số:</strong> <span id="totalElements">0</span> người dùng |
+                                    <strong>Trang:</strong> <span id="currentPage">1</span>/<span id="totalPages">1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 0;
+        const pageSize = 10;
+
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+        });
+
+        function loadUsers(page = 0) {
+            currentPage = page;
+            const type = document.getElementById('filterType').value;
+            const role = document.getElementById('filterRole').value;
+            const active = document.getElementById('filterActive').value;
+            const search = document.getElementById('filterSearch').value;
+
+            // Build query params
+            let params = new URLSearchParams({
+                page: page,
+                size: pageSize,
+                sortBy: 'createdAt',
+                sortDir: 'DESC'
+            });
+
+            if (type && type !== 'ALL') params.append('type', type);
+            if (role) params.append('role', role);
+            if (active) params.append('active', active);
+            if (search) params.append('search', search);
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('errorAlert').style.display = 'none';
+
+            // Fetch data
+            fetch(`/api/v1/admin/users?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể tải dữ liệu. Vui lòng thử lại!');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API Response:', data); // Debug
+                
+                // API trả về Page trực tiếp, không có wrapper
+                const pageData = data.data ? data.data : data;
+                
+                displayUsers(pageData.content || []);
+                displayPagination(pageData);
+                updateStats(pageData);
+            })
+            .catch(error => {
+                document.getElementById('errorAlert').textContent = error.message;
+                document.getElementById('errorAlert').style.display = 'block';
+            })
+            .finally(() => {
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                
+                // Type badge
+                const typeBadge = user.type === 'USER' 
+                    ? '<span class="badge bg-primary">Nhân viên</span>'
+                    : '<span class="badge bg-info">Công dân</span>';
+
+                // Roles
+                const roles = user.roles && user.roles.length > 0
+                    ? user.roles.map(r => `<span class="badge bg-success">${r}</span>`).join(' ')
+                    : '-';
+
+                // Active status
+                const statusBadge = user.active === true
+                    ? '<span class="badge bg-success">Hoạt động</span>'
+                    : user.active === false
+                    ? '<span class="badge bg-danger">Không hoạt động</span>'
+                    : '-';
+
+                // Format date
+                const createdAt = user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '-';
+
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${typeBadge}</td>
+                    <td>
+                        <a href="/admin/users/${user.id}/detail?type=${user.type}" class="text-primary text-decoration-none">
+                            <strong>${user.fullName || '-'}</strong>
+                        </a>
+                    </td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${roles}</td>
+                    <td>${user.departmentName || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${createdAt}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function displayPagination(data) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            if (!data) return;
+
+            const totalPages = data.totalPages || 0;
+            const currentPage = data.number || 0;
+
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadUsers(${currentPage - 1}); return false;">Trước</a>`;
+            pagination.appendChild(prevLi);
+
+            // Page numbers
+            for (let i = 0; i < totalPages; i++) {
+                if (i === 0 || i === totalPages - 1 || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#" onclick="loadUsers(${i}); return false;">${i + 1}</a>`;
+                    pagination.appendChild(li);
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    li.innerHTML = '<a class="page-link" href="#">...</a>';
+                    pagination.appendChild(li);
+                }
+            }
+
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadUsers(${currentPage + 1}); return false;">Sau</a>`;
+            pagination.appendChild(nextLi);
+        }
+
+        function updateStats(data) {
+            if (!data) return;
+            document.getElementById('totalElements').textContent = data.totalElements || 0;
+            document.getElementById('currentPage').textContent = (data.number || 0) + 1;
+            document.getElementById('totalPages').textContent = data.totalPages || 0;
+        }
+
+        function resetFilters() {
+            document.getElementById('filterType').value = 'ALL';
+            document.getElementById('filterRole').value = '';
+            document.getElementById('filterActive').value = '';
+            document.getElementById('filterSearch').value = '';
+            loadUsers(0);
+        }
+
+        // Enter key to search
+        document.getElementById('filterSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadUsers(0);
+            }
+        });
+    </script>
+</body>
+</html>

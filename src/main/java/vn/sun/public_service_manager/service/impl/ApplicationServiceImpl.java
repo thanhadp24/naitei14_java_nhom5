@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import vn.sun.public_service_manager.dto.response.ApplicationResDTO;
 import vn.sun.public_service_manager.entity.Application;
 import vn.sun.public_service_manager.entity.ApplicationDocument;
 import vn.sun.public_service_manager.entity.ApplicationStatus;
@@ -62,5 +63,69 @@ public class ApplicationServiceImpl implements ApplicationService {
             applicationDocumentRepository.save(applicationDocument);
         }
         return applicationInDb;
+    }
+
+    @Override
+    public ApplicationResDTO getApplicationById(Long id) {
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + id));
+        return mapToDTO(application);
+    }
+
+    @Transactional
+    @Override
+    public void uploadMoreDocuments(Long applicationId, MultipartFile[] files) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + applicationId));
+        // save additional application documents
+        for (MultipartFile file : files) {
+            ApplicationDocument applicationDocument = new ApplicationDocument();
+            applicationDocument.setApplication(application);
+            applicationDocument.setFileName(file.getOriginalFilename());
+            applicationDocument.setType(UploadType.USER_UPLOAD);
+
+            applicationDocumentRepository.save(applicationDocument);
+        }
+
+    }
+
+    private ApplicationResDTO mapToDTO(Application application) {
+        ApplicationResDTO dto = new ApplicationResDTO();
+        dto.setId(application.getId());
+        dto.setCode(application.getApplicationCode());
+        dto.setNote(application.getNote());
+        dto.setSubmittedAt(application.getSubmittedAt());
+
+        if (application.getStatuses() != null && !application.getStatuses().isEmpty()) {
+            dto.setStatus(application.getStatuses().get(0).getStatus());
+        }
+
+        // Map service details
+        if (application.getService() != null) {
+            ApplicationResDTO.ApplicationService serviceDTO = new ApplicationResDTO.ApplicationService();
+            serviceDTO.setId(application.getService().getId());
+            serviceDTO.setName(application.getService().getName());
+            serviceDTO.setDescription(application.getService().getDescription());
+            serviceDTO.setProcessingTime(application.getService().getProcessingTime());
+            serviceDTO.setFee(application.getService().getFee());
+            dto.setService(serviceDTO);
+        }
+
+        // Map requirements
+        if (application.getService().getServiceRequirements() != null) {
+            dto.setRequirements(
+                    application.getService().getServiceRequirements().stream().map(sr -> sr.getName()).toList());
+        }
+
+        // Map documents
+        if (application.getDocuments() != null) {
+            dto.setDocuments(application.getDocuments().stream().map(doc -> {
+                ApplicationResDTO.ApplicationDocument docDTO = new ApplicationResDTO.ApplicationDocument();
+                docDTO.setFileName(doc.getFileName());
+                docDTO.setUploadedAt(doc.getUploadedAt());
+                return docDTO;
+            }).toList());
+        }
+        return dto;
     }
 }

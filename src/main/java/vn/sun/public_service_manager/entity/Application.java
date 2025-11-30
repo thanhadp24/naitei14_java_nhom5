@@ -1,6 +1,7 @@
 package vn.sun.public_service_manager.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -48,6 +50,12 @@ public class Application {
 
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
+
+    @OneToMany(mappedBy = "application")
+    private List<ApplicationDocument> documents;
+
+    @OneToMany(mappedBy = "application")
+    private List<ApplicationStatus> statuses;
 
     @PrePersist
     protected void onCreate() {

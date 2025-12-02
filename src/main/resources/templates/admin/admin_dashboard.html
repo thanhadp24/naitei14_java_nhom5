@@ -1,67 +1,217 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Admin Panel</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">
-                    Xin chào Admin, <span th:text="${username}"></span>!
-                </span>
-                <form th:action="@{/admin/logout}" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
-                </form>
-            </div>
-        </div>
-    </nav>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5>Admin Dashboard - Quản trị viên hệ thống</h5>
+<!-- Include Head Fragment -->
+
+<head th:replace="~{layout/layout_fragment :: head('Admin Dashboard')}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Include Admin Header -->
+    <div th:replace="~{layout/layout_fragment :: admin-header}"></div>
+
+    <div class="container-fluid flex-grow-1">
+        <div class="row h-100">
+            <!-- Sidebar -->
+            <div class="col-md-2 col-lg-2 p-0">
+                <div th:replace="~{layout/layout_fragment :: admin-sidebar('dashboard')}"></div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 col-lg-10 p-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h4 mb-1">Dashboard - Tổng quan hệ thống</h2>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="#" th:href="@{/admin/dashboard}">Home</a></li>
+                                <li class="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                        </nav>
                     </div>
-                    <div class="card-body">
-                        <p>Chào mừng Admin đến với trang quản trị!</p>
-                        <p>Vai trò của bạn: <span th:text="${roles}"></span></p>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card text-white bg-success mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Quản lý người dùng</h5>
-                                        <p class="card-text">Thêm, sửa, xóa tài khoản admin và staff</p>
+                    <div>
+                        <span class="badge bg-primary">
+                            <i class="bi bi-person-badge"></i>
+                            <span th:text="${roles}">ROLE_ADMIN</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card card-stats border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <span class="text-muted text-uppercase small fw-bold">Người dùng</span>
+                                        <h3 class="mb-0 mt-2">1,234</h3>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="icon bg-primary bg-gradient text-white rounded-circle p-3">
+                                            <i class="bi bi-people fs-4"></i>
+                                        </div>
                                     </div>
                                 </div>
+                                <p class="mt-3 mb-0 text-muted small">
+                                    <span class="text-success me-1"><i class="bi bi-arrow-up"></i> 12%</span>
+                                    <span>So với tháng trước</span>
+                                </p>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card text-white bg-info mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Quản lý dịch vụ</h5>
-                                        <p class="card-text">Cấu hình các dịch vụ công</p>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card card-stats border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <span class="text-muted text-uppercase small fw-bold">Hồ sơ</span>
+                                        <h3 class="mb-0 mt-2">456</h3>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="icon bg-success bg-gradient text-white rounded-circle p-3">
+                                            <i class="bi bi-file-earmark-text fs-4"></i>
+                                        </div>
                                     </div>
                                 </div>
+                                <p class="mt-3 mb-0 text-muted small">
+                                    <span class="text-success me-1"><i class="bi bi-arrow-up"></i> 8%</span>
+                                    <span>So với tháng trước</span>
+                                </p>
                             </div>
-                            <div class="col-md-4">
-                                <div class="card text-white bg-warning mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Báo cáo thống kê</h5>
-                                        <p class="card-text">Xem báo cáo tổng quan hệ thống</p>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card card-stats border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <span class="text-muted text-uppercase small fw-bold">Đang xử lý</span>
+                                        <h3 class="mb-0 mt-2">89</h3>
                                     </div>
+                                    <div class="col-auto">
+                                        <div class="icon bg-warning bg-gradient text-white rounded-circle p-3">
+                                            <i class="bi bi-hourglass-split fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-3 mb-0 text-muted small">
+                                    <span class="text-danger me-1"><i class="bi bi-arrow-down"></i> 3%</span>
+                                    <span>So với tháng trước</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card card-stats border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <span class="text-muted text-uppercase small fw-bold">Hoàn thành</span>
+                                        <h3 class="mb-0 mt-2">367</h3>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="icon bg-info bg-gradient text-white rounded-circle p-3">
+                                            <i class="bi bi-check-circle fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-3 mb-0 text-muted small">
+                                    <span class="text-success me-1"><i class="bi bi-arrow-up"></i> 15%</span>
+                                    <span>So với tháng trước</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-activity text-primary"></i> Hoạt động gần đây
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Thời gian</th>
+                                                <th>Người dùng</th>
+                                                <th>Hoạt động</th>
+                                                <th>Trạng thái</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-muted small">10:30 AM</td>
+                                                <td>Nguyễn Văn A</td>
+                                                <td>Nộp hồ sơ đăng ký</td>
+                                                <td><span class="badge bg-success">Thành công</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted small">10:15 AM</td>
+                                                <td>Trần Thị B</td>
+                                                <td>Cập nhật thông tin</td>
+                                                <td><span class="badge bg-info">Đang xử lý</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted small">09:45 AM</td>
+                                                <td>Lê Văn C</td>
+                                                <td>Tra cứu hồ sơ</td>
+                                                <td><span class="badge bg-secondary">Hoàn thành</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-lightning-charge text-warning"></i> Thao tác nhanh
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="#" class="btn btn-outline-primary" th:href="@{/admin/users/create}">
+                                        <i class="bi bi-person-plus"></i> Thêm người dùng
+                                    </a>
+                                    <a href="#" class="btn btn-outline-success" th:href="@{/admin/services/create}">
+                                        <i class="bi bi-plus-circle"></i> Thêm dịch vụ
+                                    </a>
+                                    <a href="#" class="btn btn-outline-info" th:href="@{/admin/reports}">
+                                        <i class="bi bi-file-bar-graph"></i> Xem báo cáo
+                                    </a>
+                                    <a href="#" class="btn btn-outline-warning" th:href="@{/admin/settings}">
+                                        <i class="bi bi-gear"></i> Cài đặt hệ thống
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Include Footer -->
+    <div th:replace="~{layout/layout_fragment :: admin-footer}"></div>
+
+    <!-- Include Scripts -->
+    <th:block th:replace="~{layout/layout_fragment :: scripts}"></th:block>
+
 </body>
+
 </html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+    <!-- View Detail Modal Fragment -->
+    <div th:fragment="view-detail" class="modal fade" id="viewCitizenModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-badge"></i> Thông tin chi tiết công dân
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewCitizenContent">
+                    <!-- Content sẽ được load qua AJAX -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Content Fragment (Được load qua AJAX) -->
+    <div th:fragment="detail-content">
+        <div class="card border-0">
+            <div class="card-body">
+                <!-- Avatar và thông tin cơ bản -->
+                <div class="text-center mb-4 pb-4 border-bottom">
+                    <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
+                        <span class="fs-1" th:text="${#strings.substring(citizen.fullName, 0, 1)}">N</span>
+                    </div>
+                    <h4 class="mb-1" th:text="${citizen.fullName}">Nguyễn Văn A</h4>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-shield-check"></i>
+                        <span th:text="${citizen.nationalId}">001234567890</span>
+                    </p>
+                    <span class="badge bg-success px-3 py-2">
+                        <i class="bi bi-check-circle"></i> Đang hoạt động
+                    </span>
+                </div>
+
+                <!-- Thông tin cá nhân -->
+                <h5 class="mb-3">
+                    <i class="bi bi-person-circle text-primary"></i> Thông tin cá nhân
+                </h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-person"></i> Họ và tên
+                            </label>
+                            <p class="fw-semibold mb-0" th:text="${citizen.fullName}">Nguyễn Văn A</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-credit-card"></i> CCCD/CMND
+                            </label>
+                            <p class="fw-semibold mb-0" th:text="${citizen.nationalId}">001234567890</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-calendar3"></i> Ngày sinh
+                            </label>
+                            <p class="fw-semibold mb-0" th:text="${#dates.format(citizen.dob, 'dd/MM/yyyy')}">01/01/1990
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-gender-ambiguous"></i> Giới tính
+                            </label>
+                            <p class="fw-semibold mb-0">
+                                <span th:if="${citizen.gender?.name() == 'MALE'}" class="badge bg-info">Nam</span>
+                                <span th:if="${citizen.gender?.name() == 'FEMALE'}" class="badge bg-pink">Nữ</span>
+                                <span th:if="${citizen.gender?.name() == 'OTHER'}"
+                                    class="badge bg-secondary">Khác</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin liên hệ -->
+                <h5 class="mb-3">
+                    <i class="bi bi-telephone-fill text-success"></i> Thông tin liên hệ
+                </h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-envelope"></i> Email
+                            </label>
+                            <p class="fw-semibold mb-0">
+                                <a th:href="'mailto:' + ${citizen.email}"
+                                    th:text="${citizen.email}">example@email.com</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-phone"></i> Số điện thoại
+                            </label>
+                            <p class="fw-semibold mb-0">
+                                <a th:href="'tel:' + ${citizen.phone}" th:text="${citizen.phone}">0987654321</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-geo-alt"></i> Địa chỉ
+                            </label>
+                            <p class="fw-semibold mb-0" th:text="${citizen.address} ?: 'Chưa cập nhật'">
+                                123 Đường ABC, Quận XYZ, TP. Hà Nội
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin tài khoản -->
+                <h5 class="mb-3">
+                    <i class="bi bi-person-badge text-warning"></i> Thông tin tài khoản
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-person-circle"></i> Username
+                            </label>
+                            <p class="fw-semibold mb-0" th:text="${citizen.username}">user123</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label class="text-muted small mb-1">
+                                <i class="bi bi-shield-lock"></i> Vai trò
+                            </label>
+                            <p class="fw-semibold mb-0">
+                                <span class="badge bg-primary">CITIZEN</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .avatar-circle-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .info-item {
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            height: 100%;
+        }
+
+        .info-item label {
+            display: block;
+            font-weight: 600;
+        }
+
+        .bg-pink {
+            background-color: #e91e63;
+            color: white;
+        }
+    </style>
+
+</body>
+
+</html>

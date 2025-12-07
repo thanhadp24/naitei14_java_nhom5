@@ -126,6 +126,10 @@
                 th:href="@{/admin/dashboard}">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
+            <a class="nav-link" th:classappend="${activePage == 'citizens'} ? 'active' : ''"
+                th:href="@{/admin/citizens}">
+                <i class="bi bi-people"></i> Quản lý công dân
+            </a>
             <a class="nav-link" th:classappend="${activePage == 'users'} ? 'active' : ''" th:href="@{/admin/users}">
                 <i class="bi bi-people"></i> Quản lý người dùng
             </a>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="create">
+    <div class="modal fade" id="addCitizenModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus"></i> Thêm công dân mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/citizens/create}" method="post" id="addCitizenForm">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="fullName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CCCD/CMND <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nationalId" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" name="phoneNumber" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="dateOfBirth" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+                                <select class="form-select" name="gender" required>
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="MALE">Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                    <option value="OTHER">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Địa chỉ</label>
+                                <textarea class="form-control" name="address" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Lưu lại
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

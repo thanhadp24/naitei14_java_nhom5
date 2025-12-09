@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Include Head Fragment -->
+
+<head th:replace="~{layout/layout_fragment :: head('Quản lý công dân')}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Include Admin Header -->
+    <div th:replace="~{layout/layout_fragment :: admin-header}"></div>
+
+    <div class="container-fluid flex-grow-1">
+        <div class="row h-100">
+            <!-- Sidebar -->
+            <div class="col-md-2 col-lg-2 p-0">
+                <div th:replace="~{layout/layout_fragment :: admin-sidebar('citizens')}"></div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 col-lg-10 p-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h4 mb-1">
+                            <i class="bi bi-people-fill text-primary"></i> Quản lý công dân
+                        </h2>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="#" th:href="@{/admin/dashboard}">Home</a></li>
+                                <li class="breadcrumb-item active">Công dân</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCitizenModal">
+                            <i class="bi bi-plus-circle"></i> Thêm công dân mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alert Messages -->
+                <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span th:text="${message}">Thao tác thành công!</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span th:text="${error}">Có lỗi xảy ra!</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Filter and Search -->
+                <form class="card border-0 shadow-sm mb-4" th:action="@{/admin/citizens}" method="get">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+                                        placeholder="Tìm kiếm theo tên, CCCD, email, số điện thoại..." autofocus>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" name="size">
+                                    <option value="10" th:selected="${size == 10}">10 / trang</option>
+                                    <option value="20" th:selected="${size == 20}">20 / trang</option>
+                                    <option value="50" th:selected="${size == 50}">50 / trang</option>
+                                    <option value="100" th:selected="${size == 100}">100 / trang</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <a th:href="@{/admin/citizens}" class="btn btn-outline-secondary w-100">
+                                    <i class="bi bi-arrow-clockwise"></i> Đặt lại
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Citizens Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="citizensTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="15%">Họ và tên</th>
+                                        <th width="12%">CCCD/CMND</th>
+                                        <th width="15%">Email</th>
+                                        <th width="10%">Số điện thoại</th>
+                                        <th width="8%">Giới tính</th>
+                                        <th width="10%">Ngày sinh</th>
+                                        <!-- <th width="10%">Trạng thái</th>  -->
+                                        <th width="15%" class="text-center">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${citizens == null or citizens.isEmpty()}">
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                            Chưa có dữ liệu công dân
+                                        </td>
+                                    </tr>
+                                    <tr th:each="citizen, iter : ${citizens}">
+                                        <td th:text="${iter.count}">1</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div>
+                                                    <span class="fw-semibold" th:text="${citizen.fullName}">Nguyễn Văn A
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark"
+                                                th:text="${citizen.nationalId}">001234567890</span>
+                                        </td>
+                                        <td th:text="${citizen.email}">example@email.com</td>
+                                        <td th:text="${citizen.phone}">0987654321</td>
+                                        <td>
+                                            <span th:if="${citizen.gender.name() == 'MALE'}"
+                                                class="badge bg-info">Nam</span>
+                                            <span th:if="${citizen.gender.name() == 'FEMALE'}"
+                                                class="badge bg-pink">Nữ</span>
+                                            <span th:if="${citizen.gender.name() == 'OTHER'}"
+                                                class="badge bg-secondary">Khác</span>
+                                        </td>
+                                        <td th:text="${#dates.format(citizen.dob, 'dd/MM/yyyy')}">01/01/1990
+                                        </td>
+                                        <!-- <td>
+                                             <span th:if="${citizen.status.name() == 'ACTIVE'}" class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Hoạt động
+                                            </span>
+                                            <span th:if="${citizen.status.name() == 'INACTIVE'}" class="badge bg-secondary">
+                                                <i class="bi bi-dash-circle"></i> Không hoạt động
+                                            </span>
+                                            <span th:if="${citizen.status.name() == 'LOCKED'}" class="badge bg-danger">
+                                                <i class="bi bi-lock-fill"></i> Bị khóa
+                                            </span> 
+                                        </td> -->
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Thay đổi từ <a> thành <button> và gọi viewCitizen() -->
+                                                <button class="btn btn-outline-info" data-bs-toggle="tooltip"
+                                                    title="Xem chi tiết"
+                                                    th:onclick="'viewCitizen(' + ${citizen.id} + ')'">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                                                    title="Chỉnh sửa" th:onclick="'editCitizen(' + ${citizen.id} + ')'">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" data-bs-toggle="tooltip"
+                                                    title="Xóa" th:onclick="'deleteCitizen(' + ${citizen.id} + ')'">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav th:if="${totalPages > 1}">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/citizens(page=${currentPage - 1})}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
+                                    th:classappend="${i == currentPage} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/citizens(page=${i})}" th:text="${i}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/citizens(page=${currentPage + 1})}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Citizen Modal -->
+    <div th:insert="~{citizen/create_form::create}"></div>
+
+    <!-- Edit Citizen Modal -->
+    <div class="modal fade" id="editCitizenModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin công dân
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/citizens/update}" method="post" id="editCitizenForm">
+                    <input type="hidden" name="id" id="editCitizenId">
+                    <div class="modal-body">
+                        <!-- Similar fields as add form -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="fullName" id="editFullName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" id="editEmail" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" name="phoneNumber" id="editPhoneNumber" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-warning text-white">
+                            <i class="bi bi-save"></i> Cập nhật
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Citizen Modal -->
+    <div th:insert="~{citizen/citizen_detail::view-detail}"></div>
+
+    <!-- Include Footer -->
+    <div th:replace="~{layout/layout_fragment :: admin-footer}"></div>
+
+    <!-- Include Scripts -->
+    <th:block th:replace="~{layout/layout_fragment :: scripts}"></th:block>
+
+    <!-- Page-specific Scripts -->
+    <script>
+        $(document).ready(function () {
+            // Initialize tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // Reset filters
+            $('#resetFilter').on('click', function () {
+                $('#searchInput').val('');
+                $('#statusFilter').val('');
+                $('#genderFilter').val('');
+                $('#citizensTable tbody tr').show();
+            });
+
+            // Auto-hide alerts
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+
+        function viewCitizen(id) {
+            // Hiển thị modal
+            $('#viewCitizenModal').modal('show');
+
+            // Hiển thị loading spinner
+            $('#viewCitizenContent').html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+            </div>
+        `);
+
+            // Load dữ liệu qua AJAX
+            $.ajax({
+                url: '/admin/citizens/detail/' + id,
+                type: 'GET',
+                success: function (data) {
+                    $('#viewCitizenContent').html(data);
+                },
+                error: function (xhr, status, error) {
+                    $('#viewCitizenContent').html(`
+                    <div class="alert alert-danger m-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Lỗi!</strong> Không thể tải thông tin công dân.
+                        <br><small class="text-muted">Error: ${error}</small>
+                    </div>
+                `);
+                }
+            });
+        }
+
+        function editCitizen(id) {
+            $.get('/admin/citizens/' + id + '/edit', function (data) {
+                $('#editCitizenId').val(data.id);
+                $('#editFullName').val(data.fullName);
+                $('#editEmail').val(data.email);
+                $('#editPhoneNumber').val(data.phoneNumber);
+                $('#editStatus').val(data.status);
+                $('#editCitizenModal').modal('show');
+            });
+        }
+
+        function deleteCitizen(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa công dân này?')) {
+                $.ajax({
+                    url: '/admin/citizens/' + id,
+                    type: 'DELETE',
+                    success: function (result) {
+                        location.reload();
+                    },
+                    error: function (err) {
+                        alert('Có lỗi xảy ra!');
+                    }
+                });
+            }
+        }
+    </script>
+
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .bg-pink {
+            background-color: #e91e63;
+            color: white;
+        }
+    </style>
+
+</body>
+
+</html>

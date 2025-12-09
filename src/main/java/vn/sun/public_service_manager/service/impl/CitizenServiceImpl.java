@@ -3,6 +3,11 @@ package vn.sun.public_service_manager.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import vn.sun.public_service_manager.dto.CitizenProfileResponse;
@@ -76,5 +81,21 @@ public class CitizenServiceImpl implements CitizenService {
         citizen.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         citizenRepository.save(citizen);
+    }
+
+    @Override
+    public Page<Citizen> getAll(int page, int size, String keyword) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        if (keyword != null && !keyword.isEmpty()) {
+            return citizenRepository.findByKeyword(keyword, pageable);
+        } else {
+            return citizenRepository.findAll(pageable);
+        }
+    }
+
+    @Override
+    public Citizen getById(Long id) {
+        return citizenRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Citizen", "ID", id.toString()));
     }
 }

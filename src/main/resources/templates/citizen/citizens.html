@@ -33,9 +33,9 @@
                         </nav>
                     </div>
                     <div>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCitizenModal">
+                        <a class="btn btn-primary" th:href="@{/admin/citizens/new}">
                             <i class="bi bi-plus-circle"></i> Thêm công dân mới
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -198,51 +198,6 @@
         </div>
     </div>
 
-    <!-- Add Citizen Modal -->
-    <div th:insert="~{citizen/create_form::create}"></div>
-
-    <!-- Edit Citizen Modal -->
-    <div class="modal fade" id="editCitizenModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin công dân
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <form th:action="@{/admin/citizens/update}" method="post" id="editCitizenForm">
-                    <input type="hidden" name="id" id="editCitizenId">
-                    <div class="modal-body">
-                        <!-- Similar fields as add form -->
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="fullName" id="editFullName" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="email" id="editEmail" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" name="phoneNumber" id="editPhoneNumber" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle"></i> Hủy
-                        </button>
-                        <button type="submit" class="btn btn-warning text-white">
-                            <i class="bi bi-save"></i> Cập nhật
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- View Citizen Modal -->
     <div th:insert="~{citizen/citizen_detail::view-detail}"></div>
 
@@ -270,37 +225,20 @@
             setTimeout(function () {
                 $('.alert').fadeOut('slow');
             }, 5000);
+
         });
 
         function viewCitizen(id) {
-            // Hiển thị modal
-            $('#viewCitizenModal').modal('show');
-
-            // Hiển thị loading spinner
-            $('#viewCitizenContent').html(`
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
-            </div>
-        `);
-
-            // Load dữ liệu qua AJAX
             $.ajax({
                 url: '/admin/citizens/detail/' + id,
                 type: 'GET',
                 success: function (data) {
-                    $('#viewCitizenContent').html(data);
+                    $('#viewCitizenModalContent').html(data);
+                    $('#viewCitizenModal').modal('show');
                 },
-                error: function (xhr, status, error) {
-                    $('#viewCitizenContent').html(`
-                    <div class="alert alert-danger m-3">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <strong>Lỗi!</strong> Không thể tải thông tin công dân.
-                        <br><small class="text-muted">Error: ${error}</small>
-                    </div>
-                `);
+                error: function (err) {
+                    alert('Không thể tải thông tin công dân!');
+                    console.error(err);
                 }
             });
         }

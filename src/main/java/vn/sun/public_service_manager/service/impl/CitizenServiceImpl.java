@@ -98,4 +98,20 @@ public class CitizenServiceImpl implements CitizenService {
         return citizenRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Citizen", "ID", id.toString()));
     }
+
+    @Override
+    public Citizen save(Citizen citizen) {
+        if (citizenRepository.existsByNationalId(citizen.getNationalId())) {
+            throw new EmailAlreadyExistsException("Công dân với CMND/CCCD đã tồn tại.");
+        }
+        if (citizenRepository.existsByEmail(citizen.getEmail())) {
+            throw new EmailAlreadyExistsException("Công dân với email đã tồn tại.");
+        }
+        if (citizenRepository.existsByPhone(citizen.getPhone())) {
+            throw new EmailAlreadyExistsException("Công dân với số điện thoại đã tồn tại.");
+        }
+        citizen.setPassword(passwordEncoder.encode(citizen.getPassword()));
+        return citizenRepository.save(citizen);
+    }
+
 }

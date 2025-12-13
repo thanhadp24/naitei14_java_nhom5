@@ -77,4 +77,11 @@ public class AdminController {
         model.addAttribute("userType", type);
         return "admin/user_detail";
     }
+
+    @GetMapping("/departments")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public String departmentManagement(Model model, Authentication authentication) {
+        model.addAttribute("username", authentication.getName());
+        return "admin/department_management";
+    }
 }

@@ -6,13 +6,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import vn.sun.public_service_manager.dto.UserCreateDTO;
 import vn.sun.public_service_manager.dto.UserFilterDTO;
 import vn.sun.public_service_manager.dto.UserListDTO;
 import vn.sun.public_service_manager.service.UserManagementService;
@@ -25,21 +32,6 @@ public class UserManagementController {
 
     private final UserManagementService userManagementService;
 
-    /**
-     * API lấy danh sách tất cả người dùng (Users + Citizens)
-     * Chỉ ADMIN mới có quyền truy cập
-     * 
-     * @param type - Loại người dùng: USER, CITIZEN, ALL (default: ALL)
-     * @param role - Lọc theo vai trò: ADMIN, STAFF (chỉ áp dụng cho User)
-     * @param search - Tìm kiếm theo tên, email, phone, nationalId
-     * @param active - Lọc theo trạng thái: true/false (chỉ áp dụng cho User)
-     * @param departmentId - Lọc theo phòng ban (chỉ áp dụng cho User)
-     * @param page - Số trang (default: 0)
-     * @param size - Kích thước trang (default: 20)
-     * @param sortBy - Sắp xếp theo trường (default: createdAt)
-     * @param sortDir - Hướng sắp xếp: ASC, DESC (default: DESC)
-     * @return Page<UserListDTO> - Danh sách người dùng đã phân trang
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiMessage("Lấy thông tin người dùng thành công")
@@ -76,5 +68,51 @@ public class UserManagementController {
         Page<UserListDTO> users = userManagementService.getAllUsers(filter, pageable);
         
         return ResponseEntity.ok(users);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Tạo người dùng thành công")
+    public ResponseEntity<Long> createUser(
+            @RequestParam String type,
+            @RequestBody UserCreateDTO dto
+    ) {
+        Long userId = userManagementService.createUser(dto, type);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userId);
+    }
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Cập nhật người dùng thành công")
+    public ResponseEntity<Void> updateUser(
+            @PathVariable Long id,
+            @RequestParam String type,
+            @RequestBody UserCreateDTO dto
+    ) {
+        userManagementService.updateUser(id, dto, type);
+        return ResponseEntity.ok().build();
+    }
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Xóa người dùng thành công")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long id,
+            @RequestParam String type
+    ) {
+        userManagementService.deleteUser(id, type);
+        return ResponseEntity.ok().build();
+    }
+    
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Thay đổi trạng thái người dùng thành công")
+    public ResponseEntity<Void> toggleUserActive(
+            @PathVariable Long id,
+            @RequestParam String type,
+            @RequestParam boolean active
+    ) {
+        userManagementService.toggleUserActive(id, active, type);
+        return ResponseEntity.ok().build();
     }
 }

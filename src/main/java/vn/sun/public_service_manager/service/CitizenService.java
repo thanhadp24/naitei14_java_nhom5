@@ -19,4 +19,9 @@ public interface CitizenService {
     Page<Citizen> getAll(int page, int size, String keyword);
 
     Citizen getById(Long id);
+
+    Citizen save(Citizen citizen);
+
+    void deleteById(Long id);
+
 }

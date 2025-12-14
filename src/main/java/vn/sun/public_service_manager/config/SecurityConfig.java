@@ -41,6 +41,9 @@ public class SecurityConfig {
                         // Restrict admin dashboard to specific roles
                         .requestMatchers("/admin/dashboard").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
                         .requestMatchers("/admin/**").authenticated()
+                        .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
+                        // Admin API routes
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
                         // Yêu cầu xác thực cho tất cả các API khác
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))

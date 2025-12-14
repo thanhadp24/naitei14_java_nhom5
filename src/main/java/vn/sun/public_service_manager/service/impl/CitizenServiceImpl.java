@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import vn.sun.public_service_manager.dto.CitizenProfileResponse;
@@ -96,6 +95,41 @@ public class CitizenServiceImpl implements CitizenService {
     @Override
     public Citizen getById(Long id) {
         return citizenRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Citizen", "ID", id.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Citizen not found with id: " + id));
+    }
+
+    @Override
+    public Citizen save(Citizen citizen) {
+        if (citizen.getId() == null) {
+            if (citizenRepository.existsByNationalId(citizen.getNationalId())) {
+                throw new EmailAlreadyExistsException("Công dân với CMND/CCCD đã tồn tại.");
+            }
+            if (citizenRepository.existsByEmail(citizen.getEmail())) {
+                throw new EmailAlreadyExistsException("Công dân với email đã tồn tại.");
+            }
+            if (citizenRepository.existsByPhone(citizen.getPhone())) {
+                throw new EmailAlreadyExistsException("Công dân với số điện thoại đã tồn tại.");
+            }
+            citizen.setPassword(passwordEncoder.encode(citizen.getPassword()));
+            return citizenRepository.save(citizen);
+        } else {
+            Citizen citizenInDb = citizenRepository.findById(citizen.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Citizen not found with id: " + citizen.getId()));
+            citizenInDb.setFullName(citizen.getFullName());
+            citizenInDb.setDob(citizen.getDob());
+            citizenInDb.setGender(citizen.getGender());
+            citizenInDb.setAddress(citizen.getAddress());
+            citizenInDb.setPhone(citizen.getPhone());
+            citizenInDb.setEmail(citizen.getEmail());
+            return citizenRepository.save(citizenInDb);
+        }
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (!citizenRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Citizen not found with id: " + id);
+        }
+        citizenRepository.deleteById(id);
     }
 }

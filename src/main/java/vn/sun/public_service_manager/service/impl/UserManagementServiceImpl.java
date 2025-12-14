@@ -14,14 +14,25 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import vn.sun.public_service_manager.dto.UserCreateDTO;
 import vn.sun.public_service_manager.dto.UserFilterDTO;
 import vn.sun.public_service_manager.dto.UserListDTO;
 import vn.sun.public_service_manager.entity.Citizen;
+import vn.sun.public_service_manager.entity.Department;
+import vn.sun.public_service_manager.entity.Gender;
 import vn.sun.public_service_manager.entity.Role;
 import vn.sun.public_service_manager.entity.User;
 import vn.sun.public_service_manager.repository.CitizenRepository;
+import vn.sun.public_service_manager.repository.DepartmentRepository;
+import vn.sun.public_service_manager.repository.RoleRepository;
 import vn.sun.public_service_manager.repository.UserRespository;
 import vn.sun.public_service_manager.service.UserManagementService;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +40,9 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     private final UserRespository userRepository;
     private final CitizenRepository citizenRepository;
+    private final RoleRepository roleRepository;
+    private final DepartmentRepository departmentRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Page<UserListDTO> getAllUsers(UserFilterDTO filter, Pageable pageable) {
@@ -136,6 +150,168 @@ public class UserManagementServiceImpl implements UserManagementService {
             return convertCitizenToDTO(citizen);
         } else {
             throw new RuntimeException("Loại người dùng không hợp lệ");
+        }
+    }
+
+    @Override
+    public Long createUser(UserCreateDTO dto, String type) {
+        type = type != null ? type.toUpperCase() : "USER";
+        
+        if (type.equals("USER")) {
+            // Check username exists
+            if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
+                throw new RuntimeException("Username đã tồn tại");
+            }
+            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+                throw new RuntimeException("Email đã tồn tại");
+            }
+            
+            User user = new User();
+            user.setUsername(dto.getUsername());
+            user.setEmail(dto.getEmail());
+            user.setPhone(dto.getPhone());
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setAddress(dto.getAddress());
+            user.setActive(dto.getActive() != null ? dto.getActive() : true);
+            
+            // Set Department
+            if (dto.getDepartmentId() != null) {
+                Department department = departmentRepository.findById(dto.getDepartmentId())
+                    .orElseThrow(() -> new RuntimeException("Phòng ban không tồn tại"));
+                user.setDepartment(department);
+            }
+            
+            // Set Roles
+            if (dto.getRoleIds() != null && !dto.getRoleIds().isEmpty()) {
+                Set<Role> roles = new HashSet<>();
+                for (Long roleId : dto.getRoleIds()) {
+                    Role role = roleRepository.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException("Vai trò không tồn tại với ID: " + roleId));
+                    roles.add(role);
+                }
+                user.setRoles(roles);
+            }
+            
+            User savedUser = userRepository.save(user);
+            return savedUser.getId();
+            
+        } else if (type.equals("CITIZEN")) {
+            // Check nationalId exists
+            if (citizenRepository.existsByNationalId(dto.getNationalId())) {
+                throw new RuntimeException("CMND/CCCD đã tồn tại");
+            }
+            if (citizenRepository.existsByEmail(dto.getEmail())) {
+                throw new RuntimeException("Email đã tồn tại");
+            }
+            
+            Citizen citizen = new Citizen();
+            citizen.setFullName(dto.getFullName());
+            citizen.setNationalId(dto.getNationalId());
+            citizen.setEmail(dto.getEmail());
+            citizen.setPhone(dto.getPhone());
+            citizen.setPassword(passwordEncoder.encode(dto.getPassword()));
+            citizen.setAddress(dto.getAddress());
+            citizen.setGender(Gender.valueOf(dto.getGender()));
+            
+            // Parse date
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                Date dob = sdf.parse(dto.getDateOfBirth());
+                citizen.setDob(dob);
+            } catch (Exception e) {
+                throw new RuntimeException("Định dạng ngày sinh không hợp lệ");
+            }
+            
+            Citizen savedCitizen = citizenRepository.save(citizen);
+            return savedCitizen.getId();
+            
+        } else {
+            throw new RuntimeException("Loại người dùng không hợp lệ");
+        }
+    }
+
+    @Override
+    public void updateUser(Long id, UserCreateDTO dto, String type) {
+        type = type != null ? type.toUpperCase() : "USER";
+        
+        if (type.equals("USER")) {
+            User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            
+            // Check username exists (exclude current user)
+            userRepository.findByUsername(dto.getUsername()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(id)) {
+                    throw new RuntimeException("Username đã tồn tại");
+                }
+            });
+            
+            // Check email exists (exclude current user)
+            userRepository.findByEmail(dto.getEmail()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(id)) {
+                    throw new RuntimeException("Email đã tồn tại");
+                }
+            });
+            
+            user.setUsername(dto.getUsername());
+            user.setEmail(dto.getEmail());
+            user.setPhone(dto.getPhone());
+            user.setAddress(dto.getAddress());
+            
+            // Only update password if provided
+            if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            }
+            
+            // Update Department
+            if (dto.getDepartmentId() != null) {
+                Department department = departmentRepository.findById(dto.getDepartmentId())
+                    .orElseThrow(() -> new RuntimeException("Phòng ban không tồn tại"));
+                user.setDepartment(department);
+            } else {
+                user.setDepartment(null);
+            }
+            
+            // Update Roles
+            if (dto.getRoleIds() != null && !dto.getRoleIds().isEmpty()) {
+                Set<Role> roles = new HashSet<>();
+                for (Long roleId : dto.getRoleIds()) {
+                    Role role = roleRepository.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException("Vai trò không tồn tại với ID: " + roleId));
+                    roles.add(role);
+                }
+                user.setRoles(roles);
+            }
+            
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("Chỉ hỗ trợ cập nhật USER");
+        }
+    }
+
+    @Override
+    public void deleteUser(Long id, String type) {
+        type = type != null ? type.toUpperCase() : "USER";
+        
+        if (type.equals("USER")) {
+            User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            userRepository.delete(user);
+        } else {
+            throw new RuntimeException("Chỉ hỗ trợ xóa USER");
+        }
+    }
+
+    @Override
+    public void toggleUserActive(Long id, boolean active, String type) {
+        type = type != null ? type.toUpperCase() : "USER";
+        
+        if (type.equals("USER")) {
+            User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            user.setActive(active);
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("Chỉ hỗ trợ khóa/mở khóa USER");
         }
     }
 }

@@ -1,48 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý người dùng</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">
-                    Xin chào, <span th:text="${username}">Admin</span>!
-                </span>
-                <form th:action="@{/admin/logout}" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
-                </form>
-            </div>
-        </div>
-    </nav>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
+<!-- Include Head Fragment -->
+<head th:replace="~{layout/layout_fragment :: head('Quản lý người dùng')}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Include Admin Header -->
+    <div th:replace="~{layout/layout_fragment :: admin-header}"></div>
+
+    <div class="container-fluid flex-grow-1">
+        <div class="row h-100">
+            <!-- Sidebar -->
+            <div class="col-md-2 col-lg-2 p-0">
+                <div th:replace="~{layout/layout_fragment :: admin-sidebar('users')}"></div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 col-lg-10 p-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h4 mb-1">Quản lý người dùng</h2>
+                        <p class="text-muted mb-0">Quản lý tài khoản nhân viên hệ thống</p>
+                    </div>
+                </div>
                 <div class="card">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-people-fill"></i> Quản lý người dùng</h5>
-                        <a href="/admin/dashboard" class="btn btn-light btn-sm">
-                            <i class="bi bi-arrow-left"></i> Quay lại Dashboard
-                        </a>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                <i class="bi bi-plus-circle"></i> Thêm người dùng
+                            </button>
+                            <a href="/admin/dashboard" class="btn btn-light btn-sm">
+                                <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
                         <!-- Filters -->
                         <div class="row mb-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Loại người dùng</label>
-                                <select class="form-select" id="filterType">
-                                    <option value="ALL">Tất cả</option>
-                                    <option value="USER">Nhân viên (User)</option>
-                                    <option value="CITIZEN">Công dân (Citizen)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Vai trò</label>
                                 <select class="form-select" id="filterRole">
                                     <option value="">Tất cả</option>
@@ -50,7 +48,7 @@
                                     <option value="ROLE_STAFF">Staff</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Trạng thái</label>
                                 <select class="form-select" id="filterActive">
                                     <option value="">Tất cả</option>
@@ -58,9 +56,11 @@
                                     <option value="false">Không hoạt động</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
                                 <label class="form-label">Tìm kiếm</label>
-                                <input type="text" class="form-control" id="filterSearch" placeholder="Tên, email, phone...">
+                                <input type="text" class="form-control" id="filterSearch" placeholder="Username, email, số điện thoại...">
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -90,14 +90,12 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>ID</th>
-                                        <th>Loại</th>
-                                        <th>Tên</th>
+                                        <th>Username</th>
                                         <th>Email</th>
-                                        <th>Số điện thoại</th>
                                         <th>Vai trò</th>
                                         <th>Phòng ban</th>
                                         <th>Trạng thái</th>
-                                        <th>Ngày tạo</th>
+                                        <th>Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="userTableBody">
@@ -128,6 +126,159 @@
         </div>
     </div>
 
+    <!-- Modal Create User -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-person-plus"></i> Thêm người dùng mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <!-- Form cho User -->
+                        <div id="userForm">
+                            <h6 class="text-primary mb-3">Thông tin nhân viên</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" placeholder="admin123">
+                                    <div class="invalid-feedback" id="usernameError"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="userEmail" placeholder="user@company.com">
+                                    <div class="invalid-feedback" id="emailError"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" id="userPhone" placeholder="0912345678">
+                                    <div class="invalid-feedback" id="phoneError"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="userPassword" placeholder="Tối thiểu 6 ký tự">
+                                    <div class="invalid-feedback" id="passwordError"></div>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" id="userAddress" placeholder="Hà Nội">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phòng ban</label>
+                                    <select class="form-select" id="departmentId">
+                                        <option value="">Chọn phòng ban</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="userRole" value="1" id="roleAdmin">
+                                            <label class="form-check-label" for="roleAdmin">
+                                                <i class="bi bi-shield-fill-check text-danger"></i> Admin
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="userRole" value="2" id="roleStaff">
+                                            <label class="form-check-label" for="roleStaff">
+                                                <i class="bi bi-person-badge text-primary"></i> Staff
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Chọn một vai trò</small>
+                                    <div class="invalid-feedback" id="roleError" style="display: block;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-danger" id="createErrorAlert" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="createUser()">
+                        <i class="bi bi-save"></i> Tạo tài khoản
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit User -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Sửa thông tin người dùng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editUsername">
+                                <div class="invalid-feedback" id="editUsernameError"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="editEmail">
+                                <div class="invalid-feedback" id="editEmailError"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="editPhone">
+                                <div class="invalid-feedback" id="editPhoneError"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mật khẩu mới</label>
+                                <input type="password" class="form-control" id="editPassword" placeholder="Để trống nếu không đổi">
+                                <div class="invalid-feedback" id="editPasswordError"></div>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Địa chỉ</label>
+                                <input type="text" class="form-control" id="editAddress">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phòng ban</label>
+                                <select class="form-select" id="editDepartmentId">
+                                    <option value="">Chọn phòng ban</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                                <div class="mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="editUserRole" value="1" id="editRoleAdmin">
+                                        <label class="form-check-label" for="editRoleAdmin">
+                                            <i class="bi bi-shield-fill-check text-danger"></i> Admin
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="editUserRole" value="2" id="editRoleStaff">
+                                        <label class="form-check-label" for="editRoleStaff">
+                                            <i class="bi bi-person-badge text-primary"></i> Staff
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback" id="editRoleError" style="display: block;"></div>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger" id="editErrorAlert" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-warning" onclick="updateUser()">
+                        <i class="bi bi-save"></i> Cập nhật
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentPage = 0;
@@ -136,11 +287,11 @@
         // Load users on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadUsers();
+            loadDepartments();
         });
 
         function loadUsers(page = 0) {
             currentPage = page;
-            const type = document.getElementById('filterType').value;
             const role = document.getElementById('filterRole').value;
             const active = document.getElementById('filterActive').value;
             const search = document.getElementById('filterSearch').value;
@@ -150,10 +301,10 @@
                 page: page,
                 size: pageSize,
                 sortBy: 'createdAt',
-                sortDir: 'DESC'
+                sortDir: 'DESC',
+                type: 'USER' // Chỉ lấy User
             });
 
-            if (type && type !== 'ALL') params.append('type', type);
             if (role) params.append('role', role);
             if (active) params.append('active', active);
             if (search) params.append('search', search);
@@ -199,17 +350,12 @@
             tbody.innerHTML = '';
 
             if (!users || users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Không có dữ liệu</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
                 return;
             }
 
             users.forEach(user => {
                 const row = document.createElement('tr');
-                
-                // Type badge
-                const typeBadge = user.type === 'USER' 
-                    ? '<span class="badge bg-primary">Nhân viên</span>'
-                    : '<span class="badge bg-info">Công dân</span>';
 
                 // Roles
                 const roles = user.roles && user.roles.length > 0
@@ -223,23 +369,35 @@
                     ? '<span class="badge bg-danger">Không hoạt động</span>'
                     : '-';
 
-                // Format date
-                const createdAt = user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '-';
+                // Toggle active button
+                const toggleBtn = user.active 
+                    ? `<button class="btn btn-sm btn-secondary" onclick="toggleActive(${user.id}, false)" title="Khóa tài khoản">
+                        <i class="bi bi-lock-fill"></i>
+                    </button>`
+                    : `<button class="btn btn-sm btn-success" onclick="toggleActive(${user.id}, true)" title="Mở khóa">
+                        <i class="bi bi-unlock-fill"></i>
+                    </button>`;
 
                 row.innerHTML = `
                     <td>${user.id}</td>
-                    <td>${typeBadge}</td>
                     <td>
-                        <a href="/admin/users/${user.id}/detail?type=${user.type}" class="text-primary text-decoration-none">
-                            <strong>${user.fullName || '-'}</strong>
+                        <a href="/admin/users/${user.id}/detail?type=USER" class="text-primary text-decoration-none">
+                            <strong>${user.username || '-'}</strong>
                         </a>
                     </td>
                     <td>${user.email || '-'}</td>
-                    <td>${user.phone || '-'}</td>
                     <td>${roles}</td>
                     <td>${user.departmentName || '-'}</td>
                     <td>${statusBadge}</td>
-                    <td>${createdAt}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(${user.id})" title="Sửa">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${toggleBtn}
+                        <button class="btn btn-sm btn-danger ms-1" onclick="deleteUser(${user.id})" title="Xóa">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -290,7 +448,6 @@
         }
 
         function resetFilters() {
-            document.getElementById('filterType').value = 'ALL';
             document.getElementById('filterRole').value = '';
             document.getElementById('filterActive').value = '';
             document.getElementById('filterSearch').value = '';
@@ -303,6 +460,325 @@
                 loadUsers(0);
             }
         });
+
+        // Load departments for dropdown
+        function loadDepartments() {
+            fetch('/api/v1/admin/departments')
+                .then(response => response.json())
+                .then(data => {
+                    const departments = data.data || data;
+                    // For create modal
+                    const createSelect = document.getElementById('departmentId');
+                    // For edit modal
+                    const editSelect = document.getElementById('editDepartmentId');
+                    
+                    departments.forEach(dept => {
+                        const option1 = document.createElement('option');
+                        option1.value = dept.id;
+                        option1.textContent = dept.name;
+                        createSelect.appendChild(option1);
+                        
+                        const option2 = document.createElement('option');
+                        option2.value = dept.id;
+                        option2.textContent = dept.name;
+                        editSelect.appendChild(option2);
+                    });
+                })
+                .catch(error => console.error('Error loading departments:', error));
+        }
+
+        // Clear all validation errors
+        function clearValidationErrors() {
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+            document.getElementById('createErrorAlert').style.display = 'none';
+        }
+
+        // Show field error
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            if (field && errorDiv) {
+                field.classList.add('is-invalid');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Create new user
+        function createUser() {
+            clearValidationErrors();
+
+            // Get selected role from radio button
+            const selectedRoleElement = document.querySelector('input[name="userRole"]:checked');
+            const selectedRoles = selectedRoleElement ? [parseInt(selectedRoleElement.value)] : [];
+            
+            const userData = {
+                username: document.getElementById('username').value.trim(),
+                email: document.getElementById('userEmail').value.trim(),
+                phone: document.getElementById('userPhone').value.trim(),
+                password: document.getElementById('userPassword').value,
+                address: document.getElementById('userAddress').value.trim(),
+                departmentId: document.getElementById('departmentId').value || null,
+                roleIds: selectedRoles,
+                active: true
+            };
+
+            // Validation
+            let hasError = false;
+            
+            if (!userData.username) {
+                showFieldError('username', 'Username không được để trống');
+                hasError = true;
+            } else if (userData.username.length < 3) {
+                showFieldError('username', 'Username phải có ít nhất 3 ký tự');
+                hasError = true;
+            }
+
+            if (!userData.email) {
+                showFieldError('userEmail', 'Email không được để trống');
+                hasError = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+                showFieldError('userEmail', 'Email không hợp lệ');
+                hasError = true;
+            }
+
+            if (!userData.phone) {
+                showFieldError('userPhone', 'Số điện thoại không được để trống');
+                hasError = true;
+            } else if (!/^[0-9]{10,11}$/.test(userData.phone)) {
+                showFieldError('userPhone', 'Số điện thoại phải có 10-11 chữ số');
+                hasError = true;
+            }
+
+            if (!userData.password) {
+                showFieldError('userPassword', 'Mật khẩu không được để trống');
+                hasError = true;
+            } else if (userData.password.length < 6) {
+                showFieldError('userPassword', 'Mật khẩu phải có ít nhất 6 ký tự');
+                hasError = true;
+            }
+
+            if (selectedRoles.length === 0) {
+                showFieldError('role', 'Vui lòng chọn vai trò');
+                hasError = true;
+            }
+
+            if (hasError) {
+                return;
+            }
+
+            // Call API
+            const errorAlert = document.getElementById('createErrorAlert');
+            
+            fetch('/api/v1/admin/users?type=USER', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        // Hiển thị lỗi trong modal
+                        const errorMessage = err.message || err.error || 'Có lỗi xảy ra!';
+                        errorAlert.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${errorMessage}`;
+                        errorAlert.style.display = 'block';
+                        
+                        // Scroll to error
+                        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        throw new Error('Validation failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('createUserForm').reset();
+                clearValidationErrors();
+                
+                // Reload list
+                loadUsers(0);
+                
+                // Show success message
+                alert('Tạo tài khoản thành công!');
+            })
+            .catch(error => {
+                // Lỗi đã được hiển thị trong modal ở trên
+                if (error.message !== 'Validation failed') {
+                    errorAlert.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${error.message}`;
+                    errorAlert.style.display = 'block';
+                }
+            });
+        }
+
+        // Open edit modal and load user data
+        function openEditModal(userId) {
+            fetch(`/api/v1/admin/users/${userId}?type=USER`)
+                .then(response => response.json())
+                .then(data => {
+                    const user = data.data ? data.data : data;
+                    
+                    // Fill form
+                    document.getElementById('editUserId').value = user.id;
+                    document.getElementById('editUsername').value = user.username || '';
+                    document.getElementById('editEmail').value = user.email || '';
+                    document.getElementById('editPhone').value = user.phone || '';
+                    document.getElementById('editAddress').value = user.address || '';
+                    document.getElementById('editDepartmentId').value = user.departmentId || '';
+                    document.getElementById('editPassword').value = ''; // Clear password
+                    
+                    // Set role
+                    if (user.roles && user.roles.includes('ROLE_ADMIN')) {
+                        document.getElementById('editRoleAdmin').checked = true;
+                    } else {
+                        document.getElementById('editRoleStaff').checked = true;
+                    }
+                    
+                    // Clear errors
+                    clearValidationErrors();
+                    
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    alert('Không thể tải thông tin người dùng: ' + error.message);
+                });
+        }
+
+        // Update user
+        function updateUser() {
+            clearValidationErrors();
+
+            const userId = document.getElementById('editUserId').value;
+            const selectedRoleElement = document.querySelector('input[name="editUserRole"]:checked');
+            const selectedRoles = selectedRoleElement ? [parseInt(selectedRoleElement.value)] : [];
+            
+            const userData = {
+                username: document.getElementById('editUsername').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                password: document.getElementById('editPassword').value, // Can be empty
+                address: document.getElementById('editAddress').value.trim(),
+                departmentId: document.getElementById('editDepartmentId').value || null,
+                roleIds: selectedRoles,
+                active: true
+            };
+
+            // Validation (similar to create)
+            let hasError = false;
+            
+            if (!userData.username) {
+                showFieldError('editUsername', 'Username không được để trống');
+                hasError = true;
+            }
+            if (!userData.email) {
+                showFieldError('editEmail', 'Email không được để trống');
+                hasError = true;
+            }
+            if (!userData.phone) {
+                showFieldError('editPhone', 'Số điện thoại không được để trống');
+                hasError = true;
+            }
+            if (userData.password && userData.password.length < 6) {
+                showFieldError('editPassword', 'Mật khẩu phải có ít nhất 6 ký tự');
+                hasError = true;
+            }
+            if (selectedRoles.length === 0) {
+                showFieldError('editRole', 'Vui lòng chọn vai trò');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            const errorAlert = document.getElementById('editErrorAlert');
+            
+            fetch(`/api/v1/admin/users/${userId}?type=USER`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        const errorMessage = err.message || err.error || 'Có lỗi xảy ra!';
+                        errorAlert.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${errorMessage}`;
+                        errorAlert.style.display = 'block';
+                        throw new Error('Validation failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                modal.hide();
+                loadUsers(currentPage);
+                alert('Cập nhật thành công!');
+            })
+            .catch(error => {
+                if (error.message !== 'Validation failed') {
+                    errorAlert.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${error.message}`;
+                    errorAlert.style.display = 'block';
+                }
+            });
+        }
+
+        // Toggle active status
+        function toggleActive(userId, active) {
+            const action = active ? 'mở khóa' : 'khóa';
+            if (!confirm(`Bạn có chắc chắn muốn ${action} tài khoản này?`)) {
+                return;
+            }
+
+            fetch(`/api/v1/admin/users/${userId}/toggle-active?type=USER&active=${active}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Không thể ${action} tài khoản!`);
+                }
+                alert(`${action.charAt(0).toUpperCase() + action.slice(1)} tài khoản thành công!`);
+                loadUsers(currentPage);
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        // Delete user
+        function deleteUser(userId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác!')) {
+                return;
+            }
+
+            fetch(`/api/v1/admin/users/${userId}?type=USER`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể xóa người dùng!');
+                }
+                alert('Xóa thành công!');
+                loadUsers(currentPage);
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
     </script>
 </body>
 </html>

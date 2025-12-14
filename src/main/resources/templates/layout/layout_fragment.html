@@ -25,6 +25,7 @@
             padding: 0.75rem 1rem;
             border-radius: 0.25rem;
             margin-bottom: 0.25rem;
+            white-space: nowrap;
         }
 
         .sidebar .nav-link:hover {
@@ -35,7 +36,7 @@
         .sidebar .nav-link.active {
             background-color: rgba(255, 255, 255, 0.2);
             color: #fff;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .card-stats {
@@ -132,6 +133,9 @@
             </a>
             <a class="nav-link" th:classappend="${activePage == 'users'} ? 'active' : ''" th:href="@{/admin/users}">
                 <i class="bi bi-people"></i> Quản lý người dùng
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'departments'} ? 'active' : ''" th:href="@{/admin/departments}">
+                <i class="bi bi-building"></i> Quản lý phòng ban
             </a>
             <a class="nav-link" th:classappend="${activePage == 'services'} ? 'active' : ''"
                 th:href="@{/admin/services}">

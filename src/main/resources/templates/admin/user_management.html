@@ -463,7 +463,7 @@
 
         // Load departments for dropdown
         function loadDepartments() {
-            fetch('/api/v1/admin/departments')
+            fetch('/api/v1/admin/departments/all')
                 .then(response => response.json())
                 .then(data => {
                     const departments = data.data || data;

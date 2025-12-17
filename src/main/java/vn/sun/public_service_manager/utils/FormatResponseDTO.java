@@ -24,6 +24,18 @@ public class FormatResponseDTO implements ResponseBodyAdvice<Object> {
     @Nullable
     public Object beforeBodyWrite(@Nullable Object body, MethodParameter returnType, MediaType selectedContentType,
             Class selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
+        
+        // Exclude springdoc/swagger endpoints from wrapping
+        String path = request.getURI().getPath();
+        if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+            return body;
+        }
+        
+        // Exclude springdoc classes
+        String declaringClass = returnType.getDeclaringClass().getName();
+        if (declaringClass.startsWith("org.springdoc")) {
+            return body;
+        }
 
         int status = ((ServletServerHttpResponse) response).getServletResponse().getStatus();
         ApiMessage apiMessage = returnType.getMethodAnnotation(ApiMessage.class);

@@ -2,12 +2,19 @@ package vn.sun.public_service_manager.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,12 +55,18 @@ public class ApplicationController {
         return ResponseEntity.ok(applicationService.getApplicationById(id));
     }
 
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Upload application with files successfully")
+    @Operation(summary = "Tạo hồ sơ mới với file đính kèm", 
+               description = "Upload file và thông tin hồ sơ. File hỗ trợ: pdf, doc, docx, jpg, png")
     public ResponseEntity<FileResDTO> createApplication(
+            @Parameter(description = "ID dịch vụ", required = true, example = "1")
             @RequestParam("serviceId") Long serviceId,
+            @Parameter(description = "Ghi chú", required = true, example = "Hồ sơ cấp CMND mới")
             @RequestParam("note") String note,
-            @RequestParam(value = "files", required = false) MultipartFile[] files) throws FileException {
+            @Parameter(description = "File đính kèm (pdf, doc, docx, jpg, png)", 
+                       content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+            @RequestPart(value = "files", required = false) MultipartFile[] files) throws FileException {
 
         if (files == null || files.length == 0) {
             throw new FileException("No files uploaded.");

@@ -11,5 +11,7 @@ public interface ServiceService {
 
     ServicePageResponse searchByServiceType(Long serviceTypeId, int page, int size);
 
+    ServicePageResponse searchByServiceTypeAndKeyword(Long serviceTypeId, String keyword, int page, int size);
+
     ServiceDTO getServiceById(Long id);
 }

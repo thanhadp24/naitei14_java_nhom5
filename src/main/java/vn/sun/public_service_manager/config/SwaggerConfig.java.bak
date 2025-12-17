@@ -1,0 +1,66 @@
+package vn.sun.public_service_manager.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+@Configuration
+public class SwaggerConfig {
+
+    @Value("${server.port:8080}")
+    private String serverPort;
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        Server localServer = new Server();
+        localServer.setUrl("http://localhost:" + serverPort);
+        localServer.setDescription("Development Server");
+
+        Contact contact = new Contact();
+        contact.setName("Public Service Manager Team");
+        contact.setEmail("support@publicsevice.vn");
+
+        License license = new License()
+                .name("Apache 2.0")
+                .url("https://www.apache.org/licenses/LICENSE-2.0.html");
+
+        Info info = new Info()
+                .title("Public Service Manager API")
+                .version("1.0.0")
+                .description("API documentation for Public Service Management System - Hệ thống quản lý dịch vụ công.\n\n" +
+                        "**Các API được chia thành:**\n" +
+                        "- **Citizen Auth**: API đăng ký, đăng nhập cho công dân\n" +
+                        "- **Admin Management**: API quản lý (Users, Services, ServiceTypes, Applications)\n" +
+                        "- **Public Services**: API xem thông tin dịch vụ công")
+                .contact(contact)
+                .license(license)
+                .termsOfService("https://publicsevice.vn/terms");
+
+        // JWT Security Scheme
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .in(SecurityScheme.In.HEADER)
+                .name("Authorization");
+
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList("Bearer Authentication");
+
+        return new OpenAPI()
+                .info(info)
+                .servers(List.of(localServer))
+                .components(new Components().addSecuritySchemes("Bearer Authentication", securityScheme))
+                .addSecurityItem(securityRequirement);
+    }
+}

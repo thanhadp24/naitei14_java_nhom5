@@ -1,5 +1,8 @@
 package vn.sun.public_service_manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +14,7 @@ import vn.sun.public_service_manager.utils.annotation.ApiMessage;
 
 @RestController
 @RequestMapping("/api/v1/services")
+@Tag(name = "Services", description = "APIs xem thông tin dịch vụ công (không cần đăng nhập)")
 public class ServiceController {
 
     @Autowired
@@ -18,43 +22,42 @@ public class ServiceController {
 
     @GetMapping
     @ApiMessage("Lấy danh sách dịch vụ thành công")
+    @Operation(summary = "Lấy danh sách dịch vụ", 
+               description = "Lấy danh sách dịch vụ công với filter, search, pagination")
     public ResponseEntity<ServicePageResponse> getAllServices(
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số dịch vụ mỗi trang", example = "10")
             @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp theo field", example = "id")
             @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Chiều sắp xếp: asc hoặc desc", example = "asc")
             @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) String keyword) {
+            @Parameter(description = "Tìm kiếm theo tên dịch vụ hoặc mã", example = "")
+            @RequestParam(required = false) String keyword,
+            @Parameter(description = "Lọc theo ID loại dịch vụ (để trống = lấy tất cả)", example = "")
+            @RequestParam(required = false) Long serviceTypeId) {
 
-        ServicePageResponse response = serviceService.getAllServices(page, size, sortBy, sortDir, keyword);
-        return ResponseEntity.ok(response);
-    }
-
-    // @GetMapping("/search")
-    // @ApiMessage("Tìm kiếm dịch vụ thành công")
-    // public ResponseEntity<ServicePageResponse> searchServices(
-    // @RequestParam String keyword,
-    // @RequestParam(defaultValue = "0") int page,
-    // @RequestParam(defaultValue = "10") int size) {
-
-    // ServicePageResponse response = serviceService.searchByKeyword(keyword, page,
-    // size);
-    // return ResponseEntity.ok(response);
-    // }
-
-    @GetMapping("/service-type/{serviceTypeId}")
-    @ApiMessage("Lấy danh sách dịch vụ theo loại dịch vụ thành công")
-    public ResponseEntity<ServicePageResponse> getServicesByServiceType(
-            @PathVariable Long serviceTypeId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        ServicePageResponse response = serviceService.searchByServiceType(serviceTypeId, page, size);
+        ServicePageResponse response;
+        if (serviceTypeId != null && keyword != null && !keyword.isEmpty()) {
+            // Filter theo cả serviceTypeId và keyword
+            response = serviceService.searchByServiceTypeAndKeyword(serviceTypeId, keyword, page, size);
+        } else if (serviceTypeId != null) {
+            // Chỉ filter theo serviceTypeId
+            response = serviceService.searchByServiceType(serviceTypeId, page, size);
+        } else {
+            // Không filter hoặc chỉ search keyword
+            response = serviceService.getAllServices(page, size, sortBy, sortDir, keyword);
+        }
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @ApiMessage("Lấy chi tiết dịch vụ thành công")
-    public ResponseEntity<?> getServiceById(@PathVariable Long id) {
+    @Operation(summary = "Xem chi tiết dịch vụ", description = "Lấy thông tin chi tiết một dịch vụ theo ID")
+    public ResponseEntity<?> getServiceById(
+            @Parameter(description = "ID của dịch vụ", example = "1")
+            @PathVariable Long id) {
         try {
             ServiceDTO serviceDTO = serviceService.getServiceById(id);
             return ResponseEntity.ok(serviceDTO);

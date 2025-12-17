@@ -1,5 +1,9 @@
 package vn.sun.public_service_manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +26,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1/citizen")
 @RequiredArgsConstructor
+@Tag(name = "Citizen Protected", description = "APIs cần đăng nhập cho công dân")
 public class CitizenProtectedController {
 
     private final CitizenService citizenService;
@@ -65,9 +70,10 @@ public class CitizenProtectedController {
     }
     @PreAuthorize("hasRole('CITIZEN')")
     @GetMapping("/applications")
+    @Operation(summary = "Lấy danh sách hồ sơ của tôi", description = "Lấy tất cả hồ sơ đã nộp")
     public ResponseEntity<Page<ApplicationDTO>> listApplications(
             @AuthenticationPrincipal UserDetails userDetails,
-
+            @Parameter(description = "Số trang (bắt đầu từ 0)", schema = @Schema(type = "integer", defaultValue = "0", example = "0"))
             @PageableDefault(size = 10, sort = "submittedAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         String nationalId = getNationalId(userDetails);

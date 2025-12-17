@@ -34,8 +34,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // API Auth cho Citizen
-                        .requestMatchers("/api/citizen/auth/**", "/static/**").permitAll()
-                        .requestMatchers("/services/**").permitAll()
+                        .requestMatchers("/api/citizen/**", "/api/v1/citizen/auth/**", "/static/**").permitAll()
+                        .requestMatchers("/services/**", "/api/v1/services/**").permitAll()
+                        // Swagger/OpenAPI endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Admin MVC routes
                         .requestMatchers("/admin/login", "/admin/logout").permitAll()
                         // Restrict admin dashboard to specific roles

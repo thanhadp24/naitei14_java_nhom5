@@ -21,6 +21,12 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
 
     Page<Service> findByServiceTypeId(Long serviceTypeId, Pageable pageable);
 
+    @Query("SELECT s FROM Service s WHERE s.serviceType.id = :serviceTypeId AND (" +
+            "LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.code) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Service> findByServiceTypeIdAndKeyword(Long serviceTypeId, String keyword, Pageable pageable);
+
     Page<Service> findByResponsibleDepartmentId(Long departmentId, Pageable pageable);
 
     Page<Service> findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(

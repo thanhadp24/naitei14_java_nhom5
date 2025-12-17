@@ -16,7 +16,7 @@ public class ApplicationDTO {
     private String citizenName;
     private LocalDateTime submittedAt;
     private String assignedStaffName;
-    private StatusEnum currentStatus;
+    private StatusEnum status;
 
     public static ApplicationDTO fromEntity(Application application) {
         ApplicationDTO dto = new ApplicationDTO();
@@ -40,9 +40,9 @@ public class ApplicationDTO {
             dto.setAssignedStaffName(application.getAssignedStaff().getUsername());
         }
 
-        // Get latest status
+        // Get latest status (sorted by updatedAt DESC in entity)
         if (application.getStatuses() != null && !application.getStatuses().isEmpty()) {
-            dto.setCurrentStatus(application.getStatuses().get(0).getStatus());
+            dto.setStatus(application.getStatuses().get(0).getStatus());
         }
 
         dto.setSubmittedAt(application.getSubmittedAt());

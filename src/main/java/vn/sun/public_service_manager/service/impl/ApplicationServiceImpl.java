@@ -197,8 +197,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Long citizenId = citizen.getId();
 
-        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId
-        Page<Application> applicationPage = applicationRepository.findByCitizenId(citizenId, pageable);
+        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId (fetch statuses)
+        Page<Application> applicationPage = applicationRepository.findByCitizenIdWithStatuses(citizenId, pageable);
 
         // 3. Chuyển đổi Page<Application> sang Page<ApplicationDTO>
         return applicationPage.map(ApplicationDTO::fromEntity);

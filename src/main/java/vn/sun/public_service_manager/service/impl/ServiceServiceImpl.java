@@ -55,6 +55,14 @@ public class ServiceServiceImpl implements ServiceService {
     }
 
     @Override
+    public ServicePageResponse searchByServiceTypeAndKeyword(Long serviceTypeId, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<vn.sun.public_service_manager.entity.Service> servicePage = serviceRepository
+                .findByServiceTypeIdAndKeyword(serviceTypeId, keyword, pageable);
+        return mapToPageResponse(servicePage);
+    }
+
+    @Override
     public ServiceDTO getServiceById(Long id) {
         vn.sun.public_service_manager.entity.Service service = serviceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service not found with id: " + id));

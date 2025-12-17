@@ -2,6 +2,7 @@ package vn.sun.public_service_manager.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     Page<Application> findAll(Pageable pageable);
 
     Page<Application> findByCitizenId(Long citizenId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"statuses", "service", "service.serviceType", "citizen", "assignedStaff"})
+    @Query("SELECT a FROM Application a WHERE a.citizen.id = :citizenId")
+    Page<Application> findByCitizenIdWithStatuses(@Param("citizenId") Long citizenId, Pageable pageable);
 
     @Query("SELECT a FROM Application a " +
            "LEFT JOIN FETCH a.service s " +

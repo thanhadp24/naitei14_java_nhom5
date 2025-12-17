@@ -23,9 +23,6 @@ public class ServiceTypeApiController {
 
     private final ServiceTypeService serviceTypeService;
 
-    /**
-     * Export service types to CSV
-     */
     @GetMapping("/export")
     @ApiMessage("Xuất danh sách loại dịch vụ ra file CSV thành công")
     public void exportServiceTypesToCsv(HttpServletResponse response) {
@@ -48,9 +45,6 @@ public class ServiceTypeApiController {
         }
     }
 
-    /**
-     * Import service types from CSV
-     */
     @PostMapping("/import")
     @ApiMessage("Nhập danh sách loại dịch vụ từ file CSV thành công")
     public ResponseEntity<Map<String, Object>> importServiceTypesFromCsv(

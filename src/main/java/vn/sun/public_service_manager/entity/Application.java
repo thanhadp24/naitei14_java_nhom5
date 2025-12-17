@@ -55,6 +55,7 @@ public class Application {
     private List<ApplicationDocument> documents;
 
     @OneToMany(mappedBy = "application")
+    @jakarta.persistence.OrderBy("updatedAt DESC")
     private List<ApplicationStatus> statuses;
 
     @PrePersist

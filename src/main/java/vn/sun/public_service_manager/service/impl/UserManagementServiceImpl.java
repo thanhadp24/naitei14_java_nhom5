@@ -1,48 +1,45 @@
 package vn.sun.public_service_manager.service.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.opencsv.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import vn.sun.public_service_manager.dto.UserCreateDTO;
 import vn.sun.public_service_manager.dto.UserFilterDTO;
 import vn.sun.public_service_manager.dto.UserListDTO;
-import vn.sun.public_service_manager.entity.Citizen;
-import vn.sun.public_service_manager.entity.Department;
-import vn.sun.public_service_manager.entity.Gender;
-import vn.sun.public_service_manager.entity.Role;
-import vn.sun.public_service_manager.entity.User;
-import vn.sun.public_service_manager.repository.CitizenRepository;
-import vn.sun.public_service_manager.repository.DepartmentRepository;
-import vn.sun.public_service_manager.repository.RoleRepository;
-import vn.sun.public_service_manager.repository.UserRespository;
+import vn.sun.public_service_manager.entity.*;
+import vn.sun.public_service_manager.repository.*;
 import vn.sun.public_service_manager.service.UserManagementService;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +50,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private final RoleRepository roleRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationRepository applicationRepository;
 
     @Override
     public Page<UserListDTO> getAllUsers(UserFilterDTO filter, Pageable pageable) {
@@ -324,30 +322,6 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
-    public List<UserListDTO> getAllUsersForSelection() {
-        List<User> users = userRepository.findAll(Sort.by(Sort.Direction.ASC, "username"));
-        return users.stream()
-                .map(user -> UserListDTO.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<UserListDTO> getUsersByDepartmentId(Long departmentId) {
-        List<User> users = userRepository.findWithFilters(null, true, null, departmentId, Pageable.unpaged()).getContent();
-        return users.stream()
-                .map(user -> UserListDTO.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public void exportStaffToCsv(Writer writer) {
         Role staffRole = roleRepository.findByName("ROLE_STAFF")
                 .orElseThrow(() -> new RuntimeException("Vai trò STAFF không tồn tại"));
@@ -577,5 +551,249 @@ public class UserManagementServiceImpl implements UserManagementService {
         }
 
         return value;
+    }
+    @Override
+    public List<UserListDTO> getAllUsersForSelection() {
+        List<User> users = userRepository.findAll(Sort.by(Sort.Direction.ASC, "username"));
+        return users.stream()
+                .map(user -> UserListDTO.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .build())
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<UserListDTO> getUsersByDepartmentId(Long departmentId) {
+        List<User> users = userRepository.findWithFilters(null, true, null, departmentId, Pageable.unpaged()).getContent();
+        return users.stream()
+                .map(user -> UserListDTO.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .build())
+                .collect(Collectors.toList());
+    }
+    @Override
+    @Transactional
+    public Map<String, Object> importCitizensFromCsv(MultipartFile file) throws IOException {
+        List<String> errors = new ArrayList<>();
+        List<String> success = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        int rowNumber = 0;
+        int totalRows = 0;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+
+            // 1. Skip BOM if present
+            reader.mark(1);
+            if (reader.read() != 0xFEFF) {
+                reader.reset();
+            }
+
+            // 2. Read first line as header
+            String headerLine = reader.readLine();
+            if (headerLine == null) throw new RuntimeException("File CSV rỗng!");
+
+            // 3. Validate header (theo cấu trúc Entity Citizen)
+            String expectedHeader = "fullName,dob,gender,nationalId,address,phone,email";
+            if (!headerLine.toLowerCase().startsWith(expectedHeader.toLowerCase())) {
+                throw new RuntimeException("File CSV không đúng định dạng! Cần có: " + expectedHeader);
+            }
+
+            // 4. Read data lines
+            String line;
+            while ((line = reader.readLine()) != null) {
+                rowNumber++;
+                if (line.trim().isEmpty()) continue;
+                totalRows++;
+
+                try {
+                    String[] values = parseCSVLine(line);
+                    if (values.length < 7) {
+                        errors.add("Dòng " + rowNumber + ": Thiếu dữ liệu (Cần đủ 7 cột)");
+                        continue;
+                    }
+
+                    // Map values
+                    String fullName = values[0].trim();
+                    String dobStr = values[1].trim();
+                    String genderStr = values[2].trim().toUpperCase();
+                    String nationalId = values[3].trim();
+                    String address = values[4].trim();
+                    String phone = values[5].trim();
+                    String email = values[6].trim();
+
+                    // --- VALIDATION ---
+                    if (fullName.isEmpty() || nationalId.isEmpty() || email.isEmpty()) {
+                        errors.add("Dòng " + rowNumber + ": Họ tên, CCCD và Email không được để trống");
+                        continue;
+                    }
+
+                    // Check duplicate CCCD
+                    if (citizenRepository.existsByNationalId(nationalId)) {
+                        errors.add("Dòng " + rowNumber + ": Số CCCD '" + nationalId + "' đã tồn tại");
+                        continue;
+                    }
+
+                    // Check duplicate Email
+                    if (citizenRepository.existsByEmail(email)) {
+                        errors.add("Dòng " + rowNumber + ": Email '" + email + "' đã tồn tại");
+                        continue;
+                    }
+
+                    // Parse Date of Birth
+                    Date dob;
+                    try {
+                        dob = dateFormat.parse(dobStr);
+                    } catch (ParseException e) {
+                        errors.add("Dòng " + rowNumber + ": Ngày sinh '" + dobStr + "' sai định dạng yyyy-MM-dd");
+                        continue;
+                    }
+
+                    // Parse Gender Enum
+                    Gender gender;
+                    try {
+                        gender = Gender.valueOf(genderStr);
+                    } catch (IllegalArgumentException e) {
+                        errors.add("Dòng " + rowNumber + ": Giới tính '" + genderStr + "' không hợp lệ (MALE/FEMALE/OTHER)");
+                        continue;
+                    }
+
+                    // --- CREATE CITIZEN ---
+                    Citizen citizen = new Citizen();
+                    citizen.setFullName(fullName);
+                    citizen.setDob(dob);
+                    citizen.setGender(gender);
+                    citizen.setNationalId(nationalId);
+                    citizen.setAddress(address);
+                    citizen.setPhone(phone);
+                    citizen.setEmail(email);
+
+                    // Mật khẩu mặc định là NationalId
+                    citizen.setPassword(passwordEncoder.encode(nationalId));
+
+                    citizenRepository.save(citizen);
+                    success.add("Dòng " + rowNumber + ": Import công dân '" + fullName + "' thành công");
+
+                } catch (Exception e) {
+                    errors.add("Dòng " + rowNumber + ": " + e.getMessage());
+                }
+            }
+        }
+
+        // Prepare response
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", totalRows);
+        response.put("success", success.size());
+        response.put("failed", errors.size());
+        response.put("errors", errors);
+        response.put("successMessages", success);
+
+        return response;
+    }
+    @Override
+    public void exportApplicationsToCsv(Writer writer) {
+        try {
+            // 1. Ghi ký tự BOM để hỗ trợ hiển thị tiếng Việt trong Excel
+            writer.write('\ufeff');
+
+            try (CSVWriter csvWriter = new CSVWriter(writer)) {
+                // Định nghĩa Header cho báo cáo hồ sơ
+                String[] header = {
+                        "Mã hồ sơ",
+                        "Tên dịch vụ",
+                        "Tên công dân",
+                        "Trạng thái hiện tại",
+                        "Ngày nộp",
+                        "Ghi chú",
+                        "Thời gian xử lý dự kiến (Ngày)"
+                };
+                csvWriter.writeNext(header);
+
+                // 2. Lấy dữ liệu hồ sơ (Nên dùng JOIN FETCH để tránh Lazy loading)
+                List<Application> applications = applicationRepository.findAll();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+                for (Application app : applications) {
+                    // Lấy trạng thái mới nhất từ danh sách statuses
+                    String currentStatus = "N/A";
+                    if (app.getStatuses() != null && !app.getStatuses().isEmpty()) {
+                        // Sắp xếp hoặc lấy phần tử cuối cùng (giả định phần tử cuối là mới nhất)
+                        ApplicationStatus lastStatus = app.getStatuses().get(app.getStatuses().size() - 1);
+                        currentStatus = lastStatus.getStatus() != null ? lastStatus.getStatus().name() : "PENDING";
+                    }
+
+                    String appCode = app.getApplicationCode() != null ? app.getApplicationCode() : "";
+                    String serviceName = (app.getService() != null) ? app.getService().getName() : "N/A";
+                    String citizenName = (app.getCitizen() != null) ? app.getCitizen().getFullName() : "N/A";
+                    String submittedAt = (app.getSubmittedAt() != null) ? app.getSubmittedAt().format(formatter) : "";
+                    String note = app.getNote() != null ? app.getNote() : "";
+                    String procTime = (app.getService() != null) ? String.valueOf(app.getService().getProcessingTime()) : "0";
+
+                    // Ghi dòng dữ liệu vào CSV
+                    csvWriter.writeNext(new String[]{
+                            appCode,
+                            serviceName,
+                            citizenName,
+                            currentStatus,
+                            submittedAt,
+                            note,
+                            procTime
+                    });
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xuất CSV Application: " + e.getMessage(), e);
+        }
+    }
+    @Override
+    public void exportCitizensToCsv(Writer writer) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            // 1. Ghi ký tự BOM ngay lập tức để đảm bảo Excel mở file UTF-8 không lỗi font
+            writer.write('\ufeff');
+
+            // 2. Khởi tạo CSVWriter sau khi đã ghi BOM
+            try (CSVWriter csvWriter = new CSVWriter(writer)) {
+                String[] header = {"ID", "Full Name", "DOB", "Gender", "National ID", "Phone", "Email", "Total Applications"};
+                csvWriter.writeNext(header);
+
+                // 3. Lấy dữ liệu (Nếu dữ liệu cực lớn, nên dùng Pageable hoặc Stream)
+                List<Citizen> citizens = citizenRepository.findAll();
+
+                for (Citizen c : citizens) {
+                    // Kiểm tra null cho từng trường để tránh NullPointerException
+                    String dobStr = (c.getDob() != null) ? dateFormat.format(c.getDob()) : "";
+                    String genderStr = (c.getGender() != null) ? c.getGender().name() : "";
+
+                    // Đếm số lượng hồ sơ
+                    // Lưu ý: getApplications() phải trả về List/Collection để dùng .size()
+                    String totalApps = "0";
+                    try {
+                        if (c.getApplications() != null) {
+                            totalApps = String.valueOf(c.getApplications().size());
+                        }
+                    } catch (Exception e) {
+                        // Tránh lỗi LazyInitializationException nếu session đã đóng
+                        totalApps = "N/A";
+                    }
+
+                    csvWriter.writeNext(new String[]{
+                            String.valueOf(c.getId()),
+                            c.getFullName() != null ? c.getFullName() : "",
+                            dobStr,
+                            genderStr,
+                            c.getNationalId() != null ? c.getNationalId() : "",
+                            c.getPhone() != null ? c.getPhone() : "",
+                            c.getEmail() != null ? c.getEmail() : "",
+                            totalApps
+                    });
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error exporting Citizens to CSV: " + e.getMessage(), e);
+        }
     }
 }

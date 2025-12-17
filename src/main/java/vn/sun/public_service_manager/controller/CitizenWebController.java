@@ -30,7 +30,7 @@ public class CitizenWebController {
     @GetMapping
     public String index(
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "5") int size,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "keyword", required = false) String keyword,
             Model model) {
 

@@ -25,12 +25,7 @@
                         <h2 class="h4 mb-1">
                             <i class="bi bi-people-fill text-primary"></i> Quản lý công dân
                         </h2>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="#" th:href="@{/admin/dashboard}">Home</a></li>
-                                <li class="breadcrumb-item active">Công dân</li>
-                            </ol>
-                        </nav>
+                        <p class="text-muted mb-0">Quản lý công dân</p>
                     </div>
                     <div>
                         <a class="btn btn-primary" th:href="@{/admin/citizens/new}">
@@ -66,7 +61,7 @@
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <select class="form-select" name="size">
+                                <select class="form-select" name="size" onchange="this.form.submit()">
                                     <option value="10" th:selected="${size == 10}">10 / trang</option>
                                     <option value="20" th:selected="${size == 20}">20 / trang</option>
                                     <option value="50" th:selected="${size == 50}">50 / trang</option>

@@ -7,4 +7,6 @@ import vn.sun.public_service_manager.entity.Department;
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Long> {
     boolean existsByCode(String code);
+
+    Department findByName(String name);
 }

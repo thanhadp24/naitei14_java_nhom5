@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Kích hoạt phân quyền dựa trên method
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired

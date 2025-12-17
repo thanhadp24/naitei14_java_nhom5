@@ -27,19 +27,40 @@
                         </h2>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="#" th:href="@{/admin/dashboard}">Home</a></li>
+                                <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Home</a></li>
                                 <li class="breadcrumb-item active">Công dân</li>
                             </ol>
                         </nav>
                     </div>
-                    <div>
+                    <div class="d-flex gap-2">
+                        <a th:href="@{/api/v1/admin/users/export-citizens}" class="btn btn-outline-success">
+                            <i class="bi bi-download"></i> Xuất CSV
+                        </a>
+
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importCitizenModal">
+                            <i class="bi bi-file-earmark-arrow-up"></i> Nhập CSV
+                        </button>
+
                         <a class="btn btn-primary" th:href="@{/admin/citizens/new}">
                             <i class="bi bi-plus-circle"></i> Thêm công dân mới
                         </a>
                     </div>
                 </div>
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <span th:text="${successMessage}">Thao tác thành công!</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
 
-                <!-- Alert Messages -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${errorMessage}">Có lỗi xảy ra!</span>
+                    <ul th:if="${importErrors}" class="mt-2 mb-0 small">
+                        <li th:each="err : ${importErrors}" th:text="${err}"></li>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                -->
                 <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="bi bi-check-circle-fill"></i>
                     <span th:text="${message}">Thao tác thành công!</span>
@@ -275,6 +296,36 @@
             color: white;
         }
     </style>
+    <div class="modal fade" id="importCitizenModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/api/v1/admin/users/import-citizens}" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="importModalLabel">
+                            <i class="bi bi-file-earmark-arrow-up text-primary"></i> Nhập dữ liệu công dân từ CSV
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Chọn tệp CSV (.csv)</label>
+                            <input type="file" name="file" id="file" class="form-control" accept=".csv" required>
+                        </div>
+                        <div class="alert alert-info py-2 shadow-none border-info small">
+                            <i class="bi bi-info-circle me-1"></i> <strong>Yêu cầu định dạng tệp:</strong><br>
+                            - Cột: <code>fullName, dob, gender, nationalId, address, phone, email</code><br>
+                            - Ngày sinh (dob): <code>yyyy-MM-dd</code> (VD: 1990-01-30)<br>
+                            - Giới tính: <code>MALE</code> hoặc <code>FEMALE</code>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Bắt đầu tải lên</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </body>
 

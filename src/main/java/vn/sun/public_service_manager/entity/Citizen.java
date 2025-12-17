@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -65,4 +67,6 @@ public class Citizen {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
+    @OneToMany(mappedBy = "citizen", fetch = FetchType.LAZY)
+    private List<Application> applications;
 }

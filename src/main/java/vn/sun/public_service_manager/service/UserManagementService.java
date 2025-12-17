@@ -84,4 +84,9 @@ public interface UserManagementService {
     void exportStaffToCsv(Writer writer);
 
     Map<String, Object> importStaffFromCsv(MultipartFile file) throws IOException;
+
+    void exportCitizensToCsv(Writer writer);
+
+    void exportApplicationsToCsv(Writer writer);
+    public Map<String, Object> importCitizensFromCsv(MultipartFile file) throws IOException;
 }

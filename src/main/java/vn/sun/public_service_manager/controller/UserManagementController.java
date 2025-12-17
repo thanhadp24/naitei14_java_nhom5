@@ -158,6 +158,51 @@ public class UserManagementController {
             throw new RuntimeException("Lỗi khi xuất file CSV", e);
         }
     }
+    @GetMapping("/export-citizens")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Xuất danh sách công dân ra file CSV thành công")
+    public void exportCitizensToCsv(HttpServletResponse response) {
+        try {
+            response.setContentType("text/csv; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=\"citizen_list_" + System.currentTimeMillis() + ".csv\"");
+
+            response.getOutputStream().write(0xEF);
+            response.getOutputStream().write(0xBB);
+            response.getOutputStream().write(0xBF);
+
+            Writer writer = new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8);
+            userManagementService.exportCitizensToCsv(writer);
+            writer.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xuất file CSV Công dân", e);
+        }
+    }
+    @GetMapping("/export-applications")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @ApiMessage("Xuất danh sách hồ sơ ra file CSV thành công")
+    public void exportApplicationsToCsv(HttpServletResponse response) {
+        try {
+            response.setContentType("text/csv; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=\"application_list_" + System.currentTimeMillis() + ".csv\"");
+
+            // Ghi BOM UTF-8
+            response.getOutputStream().write(0xEF);
+            response.getOutputStream().write(0xBB);
+            response.getOutputStream().write(0xBF);
+
+            Writer writer = new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8);
+            userManagementService.exportApplicationsToCsv(writer);
+            writer.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xuất file CSV Hồ sơ", e);
+        }
+    }
+
+
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
@@ -180,6 +225,28 @@ public class UserManagementController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Lỗi khi đọc file CSV!"));
+        }
+    }
+    @PostMapping("/import-citizens")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiMessage("Nhập danh sách công dân từ file CSV thành công")
+    public ResponseEntity<Map<String, Object>> importCitizensFromCsv(
+            @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File không được để trống!"));
+        }
+
+        try {
+            Map<String, Object> result = userManagementService.importCitizensFromCsv(file);
+
+            return ResponseEntity.ok(result);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Lỗi I/O khi xử lý file CSV!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Lỗi định dạng dữ liệu: " + e.getMessage()));
         }
     }
 }

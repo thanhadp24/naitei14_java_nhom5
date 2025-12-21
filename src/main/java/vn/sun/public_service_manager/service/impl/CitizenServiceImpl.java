@@ -99,6 +99,12 @@ public class CitizenServiceImpl implements CitizenService {
     }
 
     @Override
+    public Citizen getByNationalId(String nationalId) {
+        return citizenRepository.findByNationalId(nationalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Citizen not found with id: " + nationalId));
+    }
+
+    @Override
     public Citizen save(Citizen citizen) {
         if (citizen.getId() == null) {
             if (citizenRepository.existsByNationalId(citizen.getNationalId())) {

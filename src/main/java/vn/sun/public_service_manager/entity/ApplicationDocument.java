@@ -32,6 +32,9 @@ public class ApplicationDocument {
     @Column(name = "type")
     private UploadType type;
 
+    @Column(name = "reason")
+    private String reason;
+
     @ManyToOne
     @JoinColumn(name = "application_id")
     private Application application;

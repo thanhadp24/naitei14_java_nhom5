@@ -1,7 +1,9 @@
 package vn.sun.public_service_manager.service.impl;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,8 @@ import vn.sun.public_service_manager.dto.ApplicationDTO;
 import vn.sun.public_service_manager.dto.ApplicationFilterDTO;
 import vn.sun.public_service_manager.dto.request.AssignStaffDTO;
 import vn.sun.public_service_manager.dto.request.UpdateApplicationStatusDTO;
+import vn.sun.public_service_manager.dto.response.ApplicationPageResponse;
+import vn.sun.public_service_manager.dto.response.ApplicationResApiDTO;
 import vn.sun.public_service_manager.dto.response.ApplicationResDTO;
 import vn.sun.public_service_manager.entity.Application;
 import vn.sun.public_service_manager.entity.ApplicationDocument;
@@ -35,7 +39,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationDocumentRepository applicationDocumentRepository;
     private final CitizenRepository citizenRepository;
     private final UserRepository userRepository;
-    private final SecurityUtil securityUtil;
 
     public ApplicationServiceImpl(
             ApplicationRepository applicationRepository,
@@ -43,15 +46,13 @@ public class ApplicationServiceImpl implements ApplicationService {
             ApplicationStatusRepository applicationStatusRepository,
             ApplicationDocumentRepository applicationDocumentRepository,
             CitizenRepository citizenRepository,
-            UserRepository userRepository,
-            SecurityUtil securityUtil) {
+            UserRepository userRepository) {
         this.applicationRepository = applicationRepository;
         this.serviceRepository = serviceRepository;
         this.applicationStatusRepository = applicationStatusRepository;
         this.applicationDocumentRepository = applicationDocumentRepository;
         this.citizenRepository = citizenRepository;
         this.userRepository = userRepository;
-        this.securityUtil = securityUtil;
     }
 
     @Transactional
@@ -86,9 +87,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApplicationResDTO getApplicationById(Long id) {
-        Application application = applicationRepository.findByIdWithDetails(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + id));
+    public ApplicationResDTO getApplicationById(Long id, Long citizenId) {
+        Application application = applicationRepository.findByIdWithDetails(id, citizenId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Hồ sơ không tồn tại hoặc bạn không có quyền truy cập."));
 
         // Force load lazy collections within transaction
         if (application.getStatuses() != null) {
@@ -101,21 +103,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             application.getService().getServiceRequirements().size();
         }
 
-        ApplicationResDTO dto = mapToDTO(application);
-
-        // Debug output
-        System.out.println("==== Application Detail Debug ====");
-        System.out.println("Application ID: " + application.getId());
-        System.out.println("Application Code: " + application.getApplicationCode());
-        System.out.println("Submitted At: " + application.getSubmittedAt());
-        System.out.println(
-                "Statuses: " + (application.getStatuses() != null ? application.getStatuses().size() : "null"));
-        System.out.println("DTO Code: " + dto.getCode());
-        System.out.println("DTO SubmittedAt: " + dto.getSubmittedAt());
-        System.out.println("DTO Status: " + dto.getStatus());
-        System.out.println("==================================");
-
-        return dto;
+        return mapToDTO(application);
     }
 
     @Transactional
@@ -199,7 +187,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Long citizenId = citizen.getId();
 
-        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId (fetch statuses)
+        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId (fetch
+        // statuses)
         Page<Application> applicationPage = applicationRepository.findByCitizenIdWithStatuses(citizenId, pageable);
 
         // 3. Chuyển đổi Page<Application> sang Page<ApplicationDTO>
@@ -270,5 +259,28 @@ public class ApplicationServiceImpl implements ApplicationService {
             // TODO: Set updatedBy from current user
             applicationStatusRepository.save(status);
         }
+    }
+
+    @Override
+    public ApplicationPageResponse getAllApplicationsForCitizen(Long citizenId, int page, int size, String sortBy,
+            String sortDir, String keyword) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Page<Application> applicationPage = null;
+        if (keyword != null && !keyword.isEmpty()) {
+            applicationPage = applicationRepository.findByKeyword(citizenId, keyword, pageable);
+        } else {
+            applicationPage = applicationRepository.findByCitizenIdWithStatuses(citizenId, pageable);
+        }
+        return ApplicationPageResponse.fromEntity(applicationPage);
+    }
+
+    @Override
+    public ApplicationResApiDTO getApplicationDetail(Long id, Long citizenId) {
+        Application application = applicationRepository.findByIdWithDetails(id, citizenId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Hồ sơ không tồn tại hoặc bạn không có quyền truy cập."));
+        return ApplicationResApiDTO.fromEntity(application);
     }
 }

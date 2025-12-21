@@ -5,8 +5,7 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,14 +17,16 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import vn.sun.public_service_manager.dto.response.ApplicationPageResponse;
+import vn.sun.public_service_manager.dto.response.ApplicationResApiDTO;
 import vn.sun.public_service_manager.dto.response.ApplicationResDTO;
 import vn.sun.public_service_manager.dto.response.FileResDTO;
 import vn.sun.public_service_manager.dto.response.MailResDTO;
 import vn.sun.public_service_manager.entity.Application;
 import vn.sun.public_service_manager.entity.Citizen;
 import vn.sun.public_service_manager.exception.FileException;
-import vn.sun.public_service_manager.repository.CitizenRepository;
 import vn.sun.public_service_manager.service.ApplicationService;
+import vn.sun.public_service_manager.service.CitizenService;
 import vn.sun.public_service_manager.service.EmailService;
 import vn.sun.public_service_manager.utils.FileUtil;
 import vn.sun.public_service_manager.utils.SecurityUtil;
@@ -38,35 +39,49 @@ public class ApplicationController {
     private final FileUtil fileUtil;
     private final ApplicationService applicationService;
     private final EmailService emailService;
-    private final CitizenRepository citizenRepository;
+    private final CitizenService citizenService;
 
     public ApplicationController(FileUtil fileUtil, ApplicationService applicationService, EmailService emailService,
-            CitizenRepository citizenRepository) {
+            CitizenService citizenService) {
         this.fileUtil = fileUtil;
         this.applicationService = applicationService;
         this.emailService = emailService;
-        this.citizenRepository = citizenRepository;
+        this.citizenService = citizenService;
+    }
+
+    @GetMapping
+    @ApiMessage("Get all applications successfully")
+    public ResponseEntity<ApplicationPageResponse> getAllApplications(
+            @Parameter(description = "Số trang (bắt đầu từ 1)", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Số dịch vụ mỗi trang", example = "10") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp theo field", example = "id") @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Chiều sắp xếp: asc hoặc desc", example = "asc") @RequestParam(defaultValue = "asc") String sortDir,
+            @Parameter(description = "Tìm kiếm theo tên dịch vụ hoặc mã", example = "") @RequestParam(required = false) String keyword) {
+        String nationalId = SecurityUtil.getCurrentUserName();
+        Citizen citizen = citizenService.getByNationalId(nationalId);
+        if (page < 1)
+            page = 1;
+        ApplicationPageResponse response = applicationService.getAllApplicationsForCitizen(
+                citizen.getId(), page, size, sortBy, sortDir, keyword);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @ApiMessage("Get application by ID successfully")
-    public ResponseEntity<ApplicationResDTO> getApplicationById(@PathVariable("id") Long id) {
-
-        return ResponseEntity.ok(applicationService.getApplicationById(id));
+    public ResponseEntity<ApplicationResApiDTO> getApplicationById(@PathVariable("id") Long id) {
+        String nationalId = SecurityUtil.getCurrentUserName();
+        Citizen citizen = citizenService.getByNationalId(nationalId);
+        return ResponseEntity.ok(applicationService.getApplicationDetail(id, citizen.getId()));
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Upload application with files successfully")
-    @Operation(summary = "Tạo hồ sơ mới với file đính kèm", 
-               description = "Upload file và thông tin hồ sơ. File hỗ trợ: pdf, doc, docx, jpg, png")
+    @Operation(summary = "Tạo hồ sơ mới với file đính kèm", description = "Upload file và thông tin hồ sơ. File hỗ trợ: pdf, doc, docx, jpg, png")
     public ResponseEntity<FileResDTO> createApplication(
-            @Parameter(description = "ID dịch vụ", required = true, example = "1")
-            @RequestParam("serviceId") Long serviceId,
-            @Parameter(description = "Ghi chú", required = true, example = "Hồ sơ cấp CMND mới")
-            @RequestParam("note") String note,
-            @Parameter(description = "File đính kèm (pdf, doc, docx, jpg, png)", 
-                       content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(value = "files", required = false) MultipartFile[] files) throws FileException {
+            @Parameter(description = "ID dịch vụ", required = true, example = "1") @RequestParam("serviceId") Long serviceId,
+            @Parameter(description = "Ghi chú", required = true, example = "Hồ sơ cấp CMND mới") @RequestParam("note") String note,
+            @Parameter(description = "File đính kèm (pdf, doc, docx, jpg, png)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestPart(value = "files", required = false) MultipartFile[] files)
+            throws FileException {
 
         if (files == null || files.length == 0) {
             throw new FileException("No files uploaded.");
@@ -77,8 +92,7 @@ public class ApplicationController {
 
         // create user folder if not exists
         String username = SecurityUtil.getCurrentUserName();
-        Citizen citizen = citizenRepository.findByNationalId(username)
-                .orElseThrow(() -> new FileException("Citizen with national ID " + username + " not found."));
+        Citizen citizen = citizenService.getByNationalId(username);
         fileUtil.createDirectoryIfNotExists(username);
 
         // save files to user folder

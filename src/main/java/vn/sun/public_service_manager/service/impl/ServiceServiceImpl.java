@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import vn.sun.public_service_manager.dto.ServiceDTO;
 import vn.sun.public_service_manager.dto.ServicePageResponse;
+import vn.sun.public_service_manager.exception.ResourceNotFoundException;
 import vn.sun.public_service_manager.repository.ServiceRepository;
 import vn.sun.public_service_manager.service.ServiceService;
 
@@ -26,7 +27,7 @@ public class ServiceServiceImpl implements ServiceService {
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
         if (keyword != null && !keyword.isEmpty()) {
             return mapToPageResponse(serviceRepository
                     .findByKeyword(keyword, pageable));
@@ -48,7 +49,7 @@ public class ServiceServiceImpl implements ServiceService {
 
     @Override
     public ServicePageResponse searchByServiceType(Long serviceTypeId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<vn.sun.public_service_manager.entity.Service> servicePage = serviceRepository
                 .findByServiceTypeId(serviceTypeId, pageable);
         return mapToPageResponse(servicePage);
@@ -56,7 +57,7 @@ public class ServiceServiceImpl implements ServiceService {
 
     @Override
     public ServicePageResponse searchByServiceTypeAndKeyword(Long serviceTypeId, String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<vn.sun.public_service_manager.entity.Service> servicePage = serviceRepository
                 .findByServiceTypeIdAndKeyword(serviceTypeId, keyword, pageable);
         return mapToPageResponse(servicePage);
@@ -65,7 +66,7 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     public ServiceDTO getServiceById(Long id) {
         vn.sun.public_service_manager.entity.Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Service not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found with id: " + id));
 
         return ServiceDTO.fromEntity(service);
     }

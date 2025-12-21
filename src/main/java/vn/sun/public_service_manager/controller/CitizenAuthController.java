@@ -1,7 +1,7 @@
 package vn.sun.public_service_manager.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import vn.sun.public_service_manager.entity.Citizen;
 import vn.sun.public_service_manager.repository.CitizenRepository;
 import vn.sun.public_service_manager.service.JwtService;
@@ -37,22 +37,21 @@ public class CitizenAuthController {
 
     // 1. API Đăng ký
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> registerCitizen(@RequestBody CitizenRegistrationDto registrationDto) {
+    public ResponseEntity<Map<String, Object>> registerCitizen(
+            @RequestBody @Valid CitizenRegistrationDto registrationDto) {
         if (citizenRepository.existsByNationalId(registrationDto.getNationalId())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of(
-                        "success", false,
-                        "message", "CMND/CCCD đã tồn tại trong hệ thống",
-                        "field", "nationalId"
-                    ));
+                            "success", false,
+                            "message", "CMND/CCCD đã tồn tại trong hệ thống",
+                            "field", "nationalId"));
         }
         if (citizenRepository.existsByEmail(registrationDto.getEmail())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of(
-                        "success", false,
-                        "message", "Email đã được sử dụng",
-                        "field", "email"
-                    ));
+                            "success", false,
+                            "message", "Email đã được sử dụng",
+                            "field", "email"));
         }
 
         Citizen citizen = new Citizen();
@@ -67,17 +66,15 @@ public class CitizenAuthController {
         citizen.setPassword(passwordEncoder.encode(registrationDto.getPassword())); // MÃ HÓA
 
         Citizen savedCitizen = citizenRepository.save(citizen);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of(
-                    "success", true,
-                    "message", "Đăng ký thành công! Vui lòng đăng nhập.",
-                    "data", Map.of(
-                        "nationalId", savedCitizen.getNationalId(),
-                        "fullName", savedCitizen.getFullName(),
-                        "email", savedCitizen.getEmail()
-                    )
-                ));
+                        // "success", true,
+                        // "message", "Đăng ký thành công! Vui lòng đăng nhập.",
+                        "citizen", Map.of(
+                                "nationalId", savedCitizen.getNationalId(),
+                                "fullName", savedCitizen.getFullName(),
+                                "email", savedCitizen.getEmail())));
     }
 
     // 2. API Đăng nhập

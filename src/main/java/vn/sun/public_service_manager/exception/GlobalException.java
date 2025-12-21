@@ -1,12 +1,16 @@
 package vn.sun.public_service_manager.exception;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import jakarta.validation.ConstraintViolationException;
 import vn.sun.public_service_manager.dto.ApiResponseDTO;
 
 @RestControllerAdvice
@@ -37,6 +41,41 @@ public class GlobalException {
         response.setData(null);
         response.setMessage(ex.getMessage());
         response.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        return ResponseEntity.status(400).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex) {
+        ApiResponseDTO<Object> response = new ApiResponseDTO<>();
+        response.setData(null);
+
+        List<String> messages = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fe -> fe.getDefaultMessage())
+                .toList();
+
+        response.setMessage("Validation failed: " + messages);
+        response.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        return ResponseEntity.status(400).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleConstraintViolationException(
+            ConstraintViolationException ex) {
+        ApiResponseDTO<Object> response = new ApiResponseDTO<>();
+        response.setData(null);
+
+        List<String> messages = ex.getConstraintViolations()
+                .stream()
+                .map(cv -> cv.getMessage())
+                .toList();
+
+        response.setMessage("Validation failed: " + messages);
+        response.setError(ConstraintViolationException.class.getSimpleName());
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(400).body(response);
     }

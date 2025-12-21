@@ -22,22 +22,17 @@ public class ServiceController {
 
     @GetMapping
     @ApiMessage("Lấy danh sách dịch vụ thành công")
-    @Operation(summary = "Lấy danh sách dịch vụ", 
-               description = "Lấy danh sách dịch vụ công với filter, search, pagination")
+    @Operation(summary = "Lấy danh sách dịch vụ", description = "Lấy danh sách dịch vụ công với filter, search, pagination")
     public ResponseEntity<ServicePageResponse> getAllServices(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Số dịch vụ mỗi trang", example = "10")
-            @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Sắp xếp theo field", example = "id")
-            @RequestParam(defaultValue = "id") String sortBy,
-            @Parameter(description = "Chiều sắp xếp: asc hoặc desc", example = "asc")
-            @RequestParam(defaultValue = "asc") String sortDir,
-            @Parameter(description = "Tìm kiếm theo tên dịch vụ hoặc mã", example = "")
-            @RequestParam(required = false) String keyword,
-            @Parameter(description = "Lọc theo ID loại dịch vụ (để trống = lấy tất cả)", example = "")
-            @RequestParam(required = false) Long serviceTypeId) {
+            @Parameter(description = "Số trang (bắt đầu từ 1)", example = "1") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Số dịch vụ mỗi trang", example = "10") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp theo field", example = "id") @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Chiều sắp xếp: asc hoặc desc", example = "asc") @RequestParam(defaultValue = "asc") String sortDir,
+            @Parameter(description = "Tìm kiếm theo tên dịch vụ hoặc mã", example = "") @RequestParam(required = false) String keyword,
+            @Parameter(description = "Lọc theo ID loại dịch vụ (để trống = lấy tất cả)", example = "") @RequestParam(required = false) Long serviceTypeId) {
 
+        if (page < 1)
+            page = 1;
         ServicePageResponse response;
         if (serviceTypeId != null && keyword != null && !keyword.isEmpty()) {
             // Filter theo cả serviceTypeId và keyword
@@ -56,14 +51,8 @@ public class ServiceController {
     @ApiMessage("Lấy chi tiết dịch vụ thành công")
     @Operation(summary = "Xem chi tiết dịch vụ", description = "Lấy thông tin chi tiết một dịch vụ theo ID")
     public ResponseEntity<?> getServiceById(
-            @Parameter(description = "ID của dịch vụ", example = "1")
-            @PathVariable Long id) {
-        try {
-            ServiceDTO serviceDTO = serviceService.getServiceById(id);
-            return ResponseEntity.ok(serviceDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+            @Parameter(description = "ID của dịch vụ", example = "1") @PathVariable Long id) {
+        ServiceDTO serviceDTO = serviceService.getServiceById(id);
+        return ResponseEntity.ok(serviceDTO);
     }
 }

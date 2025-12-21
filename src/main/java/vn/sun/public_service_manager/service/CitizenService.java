@@ -20,6 +20,8 @@ public interface CitizenService {
 
     Citizen getById(Long id);
 
+    Citizen getByNationalId(String nationalId);
+
     Citizen save(Citizen citizen);
 
     void deleteById(Long id);

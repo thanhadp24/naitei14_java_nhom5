@@ -27,7 +27,6 @@ import vn.sun.public_service_manager.repository.specification.ApplicationSpecifi
 import vn.sun.public_service_manager.service.ApplicationService;
 import vn.sun.public_service_manager.utils.constant.StatusEnum;
 import vn.sun.public_service_manager.utils.constant.UploadType;
-import vn.sun.public_service_manager.utils.SecurityUtil;
 
 import java.time.LocalDateTime;
 

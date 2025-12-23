@@ -117,11 +117,14 @@ public class ApplicationController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/upload-more")
+    @PostMapping(value = "/upload-more", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Upload more files to existing application successfully")
+    @Operation(summary = "Bổ sung tài liệu cho hồ sơ", description = "Upload thêm file cho hồ sơ đã tồn tại. File hỗ trợ: pdf, doc, docx, jpg, png")
     public ResponseEntity<FileResDTO> uploadMoreFiles(
-            @RequestParam("applicationId") Long applicationId,
-            @RequestParam(value = "files", required = false) MultipartFile[] files) throws FileException {
+            @Parameter(description = "ID hồ sơ", required = true, example = "1") @RequestParam("applicationId") Long applicationId,
+
+            @Parameter(description = "File đính kèm (pdf, doc, docx, jpg, png)", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestPart("files") MultipartFile[] files)
+            throws FileException {
 
         if (files == null || files.length == 0) {
             throw new FileException("No files uploaded.");
@@ -130,14 +133,10 @@ public class ApplicationController {
         List<String> allowedExtensions = List.of("pdf", "doc", "docx", "jpg", "png");
         fileUtil.validateFileExtensions(files, allowedExtensions);
 
-        // create user folder if not exists
         String username = SecurityUtil.getCurrentUserName();
         fileUtil.createDirectoryIfNotExists(username);
-
-        // save files to user folder
         fileUtil.saveFiles(files, username);
 
-        // save application data
         applicationService.uploadMoreDocuments(applicationId, files);
 
         FileResDTO response = new FileResDTO();
@@ -145,5 +144,4 @@ public class ApplicationController {
         response.setUploadedAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(response);
     }
-
 }

@@ -35,7 +35,7 @@ public class GlobalException {
         return ResponseEntity.status(401).body(response);
     }
 
-    @ExceptionHandler(value = { FileException.class, MaxUploadSizeExceededException.class })
+    @ExceptionHandler(value = { FileException.class })
     public ResponseEntity<ApiResponseDTO<Object>> handleFileException(Exception ex) {
         ApiResponseDTO<Object> response = new ApiResponseDTO<>();
         response.setData(null);
@@ -43,6 +43,16 @@ public class GlobalException {
         response.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(400).body(response);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleMaxFileSizeException(MaxUploadSizeExceededException ex) {
+        ApiResponseDTO<Object> response = new ApiResponseDTO<>();
+        response.setData(null);
+        response.setMessage("File size exceeds the maximum allowed limit. Please upload a smaller file.");
+        response.setError("MaxUploadSizeExceededException");
+        response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

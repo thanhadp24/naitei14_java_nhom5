@@ -2,6 +2,7 @@ package vn.sun.public_service_manager.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,9 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import vn.sun.public_service_manager.entity.User;
 import vn.sun.public_service_manager.entity.Role;
-import java.util.Set;
+import vn.sun.public_service_manager.entity.User;
 
 @Repository
 public interface UserRespository extends JpaRepository<User, Long> {
@@ -40,5 +40,7 @@ public interface UserRespository extends JpaRepository<User, Long> {
         List<User> findByRoles(Set<Role> roles);
 
         boolean existsByEmail(String email);
+
+        boolean existsByUsername(String username);
 
 }

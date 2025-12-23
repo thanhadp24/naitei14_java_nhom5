@@ -162,9 +162,6 @@
                                         <i class="bi bi-activity text-primary"></i>
                                         Hoạt động gần đây
                                     </h5>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                        Xem tất cả <i class="bi bi-arrow-right"></i>
-                                    </a>
                                 </div>
                             </div>
                             <div class="card-body p-0">
@@ -176,116 +173,54 @@
                                                     <i class="bi bi-clock"></i> Thời gian
                                                 </th>
                                                 <th class="border-0">
-                                                    <i class="bi bi-person"></i> Người dùng
+                                                    <i class="bi bi-person"></i> Người thực hiện
                                                 </th>
                                                 <th class="border-0">
                                                     <i class="bi bi-activity"></i> Hoạt động
                                                 </th>
                                                 <th class="border-0">
-                                                    <i class="bi bi-check-circle"></i> Trạng thái
+                                                    <i class="bi bi-info-circle"></i> Mô tả
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
+                                            <tr th:if="${#lists.isEmpty(recentActivities)}">
+                                                <td colspan="4" class="text-center py-4 text-muted">
+                                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                                    Chưa có hoạt động nào
+                                                </td>
+                                            </tr>
+                                            <tr th:each="activity : ${recentActivities}">
                                                 <td class="text-muted small">
                                                     <i class="bi bi-clock-fill text-primary"></i>
-                                                    10:30 AM
+                                                    <span th:text="${#temporals.format(activity.createdAt, 'dd/MM/yyyy HH:mm')}">10:30 AM</span>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex align-items-center">
-                                                        <div
-                                                            class="avatar-sm bg-primary-subtle text-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                                            <i class="bi bi-person-fill"></i>
+                                                        <div class="me-2">
+                                                            <span th:switch="${activity.actorType?.name()}">
+                                                                <i th:case="'USER'" class="bi bi-person-circle text-primary fs-5"></i>
+                                                                <i th:case="'SYSTEM'" class="bi bi-gear-fill text-secondary fs-5"></i>
+                                                                <i th:case="*" class="bi bi-question-circle text-muted fs-5"></i>
+                                                            </span>
                                                         </div>
-                                                        <span>Nguyễn Văn A</span>
+                                                        <div class="small">
+                                                            <div class="fw-bold" th:text="${activity.actorType?.name()}">USER</div>
+                                                            <div class="text-muted">ID: <span th:text="${activity.actorId}">1</span></div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-info-subtle text-info">
-                                                        <i class="bi bi-file-earmark-plus"></i> Nộp hồ sơ
+                                                    <span class="badge" 
+                                                          th:classappend="${#strings.containsIgnoreCase(activity.action, 'create') or #strings.containsIgnoreCase(activity.action, 'add')} ? 'bg-success' : 
+                                                                         (${#strings.containsIgnoreCase(activity.action, 'update') or #strings.containsIgnoreCase(activity.action, 'edit')} ? 'bg-info' : 
+                                                                         (${#strings.containsIgnoreCase(activity.action, 'delete') or #strings.containsIgnoreCase(activity.action, 'remove')} ? 'bg-danger' : 'bg-secondary'))"
+                                                          th:text="${activity.action}">
+                                                        Action
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <span class="badge bg-success">
-                                                        <i class="bi bi-check-circle-fill"></i> Thành công
-                                                    </span>
-                                                </td>
+                                                <td class="small" th:text="${activity.description}">Description</td>
                                             </tr>
-                                            <tr>
-                                                <td class="text-muted small">
-                                                    <i class="bi bi-clock-fill text-warning"></i>
-                                                    10:15 AM
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div
-                                                            class="avatar-sm bg-success-subtle text-success rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                                            <i class="bi bi-person-fill"></i>
-                                                        </div>
-                                                        <span>Trần Thị B</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-warning-subtle text-warning">
-                                                        <i class="bi bi-pencil-square"></i> Cập nhật thông tin
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-warning text-dark">
-                                                        <i class="bi bi-hourglass-split"></i> Đang xử lý
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-muted small">
-                                                    <i class="bi bi-clock-fill text-info"></i>
-                                                    09:45 AM
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div
-                                                            class="avatar-sm bg-info-subtle text-info rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                                            <i class="bi bi-person-fill"></i>
-                                                        </div>
-                                                        <span>Lê Văn C</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-primary-subtle text-primary">
-                                                        <i class="bi bi-search"></i> Tra cứu hồ sơ
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-secondary">
-                                                        <i class="bi bi-check-all"></i> Hoàn thành
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-muted small">
-                                                    <i class="bi bi-clock-fill text-success"></i>
-                                                    09:20 AM
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div
-                                                            class="avatar-sm bg-danger-subtle text-danger rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                                            <i class="bi bi-person-fill"></i>
-                                                        </div>
-                                                        <span>Phạm Thị D</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-danger-subtle text-danger">
-                                                        <i class="bi bi-file-earmark-x"></i> Hủy hồ sơ
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-danger">
-                                                        <i class="bi bi-x-circle-fill"></i> Đã hủy
-                                                    </span>
-                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>

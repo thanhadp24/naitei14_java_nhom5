@@ -28,7 +28,9 @@ public class UserListDTO {
     // Riêng cho User
     private String username;
     private String departmentName;
+    private Long departmentId;
     private Set<String> roles;
+    private Set<Long> roleIds;
     private Boolean active;
     
     // Riêng cho Citizen

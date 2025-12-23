@@ -4,6 +4,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -191,10 +192,26 @@ public class AdminUserManagementController {
         }
 
         try {
-            userManagementService.importStaffFromCsv(file);
-            redirectAttributes.addFlashAttribute("successMessage", "Nhập file CSV thành công!");
+            Map<String, Object> result = userManagementService.importStaffFromCsv(file);
+            int success = (int) result.get("success");
+            int skipped = (int) result.get("skipped");
+            @SuppressWarnings("unchecked")
+            List<String> errors = (List<String>) result.get("errors");
+            
+            if (success > 0) {
+                redirectAttributes.addFlashAttribute("successMessage", 
+                    "Import thành công " + success + " người dùng" + 
+                    (skipped > 0 ? ", bỏ qua " + skipped + " ID trùng" : ""));
+            }
+            
+            if (!errors.isEmpty()) {
+                redirectAttributes.addFlashAttribute("importErrors", errors);
+                if (success == 0) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Import thất bại!");
+                }
+            }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi đọc file CSV: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
 
         return "redirect:/admin/users";

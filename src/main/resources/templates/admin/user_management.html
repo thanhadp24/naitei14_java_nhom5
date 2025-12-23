@@ -31,6 +31,9 @@
                             <i class="bi bi-people-fill"></i> Danh sách người dùng
                         </h5>
                         <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                                <i class="bi bi-upload"></i> Import CSV
+                            </button>
                             <a th:href="@{/admin/users/export}" class="btn btn-light btn-sm">
                                 <i class="bi bi-download"></i> Export CSV
                             </a>
@@ -146,10 +149,39 @@
                                             <span th:unless="${user.active}" class="badge bg-danger">Khóa</span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary" 
-                                                    title="Xem chi tiết">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <a th:href="@{/admin/users/{id}(id=${user.id}, type='USER')}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Xem chi tiết">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                
+                                                <!-- Edit Button -->
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-info btn-edit-user"
+                                                        th:data-user-id="${user.id}"
+                                                        th:data-username="${user.username}"
+                                                        th:data-email="${user.email}"
+                                                        th:data-phone="${user.phone ?: ''}"
+                                                        th:data-address="${user.address ?: ''}"
+                                                        th:data-department-id="${user.departmentId ?: ''}"
+                                                        th:data-role-ids="${user.roleIds != null ? #strings.arrayJoin(user.roleIds, ',') : ''}"
+                                                        th:data-active="${user.active}"
+                                                        title="Chỉnh sửa">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                
+                                                <!-- Toggle Active/Block Button -->
+                                                <button type="button"
+                                                        class="btn btn-sm btn-toggle-status"
+                                                        th:classappend="${user.active ? 'btn-outline-warning' : 'btn-outline-success'}"
+                                                        th:data-user-id="${user.id}"
+                                                        th:data-active="${!user.active}"
+                                                        th:data-action="${user.active ? 'chặn' : 'mở khóa'}"
+                                                        th:title="${user.active ? 'Chặn người dùng' : 'Mở khóa'}">
+                                                    <i th:class="${user.active ? 'bi bi-lock' : 'bi bi-unlock'}"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -220,8 +252,191 @@
         </div>
     </footer>
 
+    <!-- Import CSV Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import người dùng từ CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/users/import}" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> File CSV cần có 3 cột: <strong>id, username, email</strong>
+                            <br>Nếu ID đã tồn tại, bản ghi sẽ bị bỏ qua.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Chọn file CSV</label>
+                            <input type="file" class="form-control" name="file" accept=".csv" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Import
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa người dùng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editUserForm" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="type" value="USER">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editUsername" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="editEmail" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" class="form-control" id="editPhone" name="phone" placeholder="Nhập số điện thoại">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phòng ban</label>
+                                <select class="form-select" id="editDepartmentId" name="departmentId">
+                                    <option value="">-- Chọn phòng ban --</option>
+                                    <option th:each="dept : ${departments}" 
+                                            th:value="${dept.id}" 
+                                            th:text="${dept.name}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Địa chỉ</label>
+                            <textarea class="form-control" id="editAddress" name="address" rows="2" placeholder="Nhập địa chỉ"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                            <div id="editRolesList">
+                                <div th:each="role : ${roles}" class="form-check">
+                                    <input class="form-check-input edit-role-checkbox" 
+                                           type="checkbox" 
+                                           name="roleIds" 
+                                           th:value="${role.id}" 
+                                           th:id="'editRole' + ${role.id}">
+                                    <label class="form-check-label" th:for="'editRole' + ${role.id}" th:text="${role.name}"></label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editActive" name="active" value="true">
+                                <label class="form-check-label" for="editActive">Trạng thái hoạt động</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle user status buttons
+            document.querySelectorAll('.btn-toggle-status').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const newActiveStatus = this.getAttribute('data-active');
+                    const action = this.getAttribute('data-action');
+                    
+                    if (confirm('Bạn có chắc chắn muốn ' + action + ' người dùng này?')) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/admin/users/' + userId + '/toggle-active';
+                        
+                        const typeInput = document.createElement('input');
+                        typeInput.type = 'hidden';
+                        typeInput.name = 'type';
+                        typeInput.value = 'USER';
+                        
+                        const activeInput = document.createElement('input');
+                        activeInput.type = 'hidden';
+                        activeInput.name = 'active';
+                        activeInput.value = newActiveStatus;
+                        
+                        form.appendChild(typeInput);
+                        form.appendChild(activeInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            });
+            
+            // Edit user buttons
+            document.querySelectorAll('.btn-edit-user').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    const email = this.getAttribute('data-email');
+                    const phone = this.getAttribute('data-phone');
+                    const address = this.getAttribute('data-address');
+                    const departmentId = this.getAttribute('data-department-id');
+                    const roleIds = this.getAttribute('data-role-ids');
+                    const active = this.getAttribute('data-active') === 'true';
+                    
+                    // Fill form fields
+                    document.getElementById('editUsername').value = username || '';
+                    document.getElementById('editEmail').value = email || '';
+                    document.getElementById('editPhone').value = phone || '';
+                    document.getElementById('editAddress').value = address || '';
+                    document.getElementById('editDepartmentId').value = departmentId || '';
+                    document.getElementById('editActive').checked = active;
+                    
+                    // Clear all role checkboxes first
+                    document.querySelectorAll('.edit-role-checkbox').forEach(function(checkbox) {
+                        checkbox.checked = false;
+                    });
+                    
+                    // Check roles that user has
+                    if (roleIds) {
+                        const userRoleIds = roleIds.split(',');
+                        userRoleIds.forEach(function(roleId) {
+                            const checkbox = document.querySelector('.edit-role-checkbox[value="' + roleId.trim() + '"]');
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                    
+                    document.getElementById('editUserForm').action = '/admin/users/' + userId + '/update';
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                    modal.show();
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

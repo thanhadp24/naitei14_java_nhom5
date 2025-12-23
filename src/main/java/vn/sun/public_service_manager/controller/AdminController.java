@@ -1,5 +1,9 @@
 package vn.sun.public_service_manager.controller;
 
+import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import vn.sun.public_service_manager.repository.UserRepository;
+import vn.sun.public_service_manager.entity.ActivityLog;
+import vn.sun.public_service_manager.repository.ActivityLogRepository;
 import vn.sun.public_service_manager.repository.ApplicationRepository;
 import vn.sun.public_service_manager.repository.ApplicationStatusRepository;
+import vn.sun.public_service_manager.repository.UserRepository;
 import vn.sun.public_service_manager.utils.constant.StatusEnum;
 
 @Controller
@@ -25,13 +31,16 @@ public class AdminController {
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
     private final ApplicationStatusRepository applicationStatusRepository;
+    private final ActivityLogRepository activityLogRepository;
 
     public AdminController(UserRepository userRepository,
                           ApplicationRepository applicationRepository,
-                          ApplicationStatusRepository applicationStatusRepository) {
+                          ApplicationStatusRepository applicationStatusRepository,
+                          ActivityLogRepository activityLogRepository) {
         this.userRepository = userRepository;
         this.applicationRepository = applicationRepository;
         this.applicationStatusRepository = applicationStatusRepository;
+        this.activityLogRepository = activityLogRepository;
     }
 
     @GetMapping("/login")
@@ -61,10 +70,16 @@ public class AdminController {
         long processingCount = applicationStatusRepository.countByLatestStatus(StatusEnum.PROCESSING);
         long approvedCount = applicationStatusRepository.countByLatestStatus(StatusEnum.APPROVED);
         
+        // Load 5 most recent activity logs
+        List<ActivityLog> recentActivities = activityLogRepository.findAll(
+            PageRequest.of(0, 5, Sort.by("createdAt").descending())
+        ).getContent();
+        
         model.addAttribute("totalUsers", totalUsers);
         model.addAttribute("totalApplications", totalApplications);
         model.addAttribute("processingCount", processingCount);
         model.addAttribute("approvedCount", approvedCount);
+        model.addAttribute("recentActivities", recentActivities);
 
         return "admin/admin_dashboard";
     }

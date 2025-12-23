@@ -1,45 +1,53 @@
 package vn.sun.public_service_manager.service.impl;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.opencsv.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.opencsv.CSVWriter;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import vn.sun.public_service_manager.dto.UserCreateDTO;
 import vn.sun.public_service_manager.dto.UserFilterDTO;
 import vn.sun.public_service_manager.dto.UserListDTO;
-import vn.sun.public_service_manager.entity.*;
-import vn.sun.public_service_manager.repository.*;
+import vn.sun.public_service_manager.entity.ApplicationStatus;
+import vn.sun.public_service_manager.entity.Citizen;
+import vn.sun.public_service_manager.entity.Department;
+import vn.sun.public_service_manager.entity.Gender;
+import vn.sun.public_service_manager.entity.Role;
+import vn.sun.public_service_manager.entity.User;
+import vn.sun.public_service_manager.repository.ApplicationRepository;
+import vn.sun.public_service_manager.repository.CitizenRepository;
+import vn.sun.public_service_manager.repository.DepartmentRepository;
+import vn.sun.public_service_manager.repository.RoleRepository;
+import vn.sun.public_service_manager.repository.UserRespository;
 import vn.sun.public_service_manager.service.UserManagementService;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -112,8 +120,12 @@ public class UserManagementServiceImpl implements UserManagementService {
                 .phone(user.getPhone())
                 .address(user.getAddress())
                 .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .departmentId(user.getDepartment() != null ? user.getDepartment().getId() : null)
                 .roles(user.getRoles() != null
                         ? user.getRoles().stream().map(Role::getName).collect(Collectors.toSet())
+                        : Collections.emptySet())
+                .roleIds(user.getRoles() != null
+                        ? user.getRoles().stream().map(Role::getId).collect(Collectors.toSet())
                         : Collections.emptySet())
                 .active(user.getActive())
                 .createdAt(createdAt)
@@ -323,29 +335,34 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     @Override
     public void exportStaffToCsv(Writer writer) {
-        Role staffRole = roleRepository.findByName("ROLE_STAFF")
-                .orElseThrow(() -> new RuntimeException("Vai trò STAFF không tồn tại"));
-
-        List<User> staffs = userRepository.findByRoles(Collections.singleton(staffRole));
+        // Admin export tất cả users
+        List<User> users = userRepository.findAll();
 
         try {
             // Write UTF-8 BOM để Excel nhận diện
             writer.write('\ufeff');
 
             // Header - không có khoảng trắng sau dấu phẩy
-            writer.write("ID,Username,Email,Phone,Address,Department,Active,Created At\n");
+            writer.write("ID,Username,Email,Phone,Address,Department,Roles,Active,Created At\n");
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             // Write data với escape
-            for (User staff : staffs) {
-                writer.write(String.format("%d,%s,%s,%s,%s,%s,%b,%s\n",
-                        staff.getId(),
-                        escapeCSV(staff.getUsername()),
-                        escapeCSV(staff.getEmail()),
-                        escapeCSV(staff.getPhone()),
-                        escapeCSV(staff.getAddress()),
-                        escapeCSV(staff.getDepartment() != null ? staff.getDepartment().getName() : ""),
-                        staff.getActive(),
-                        staff.getCreatedAt() != null ? staff.getCreatedAt().format(df) : ""));
+            for (User user : users) {
+                String roles = user.getRoles() != null 
+                    ? user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.joining(";"))
+                    : "";
+                
+                writer.write(String.format("%d,%s,%s,%s,%s,%s,%s,%b,%s\n",
+                        user.getId(),
+                        escapeCSV(user.getUsername()),
+                        escapeCSV(user.getEmail()),
+                        escapeCSV(user.getPhone()),
+                        escapeCSV(user.getAddress()),
+                        escapeCSV(user.getDepartment() != null ? user.getDepartment().getName() : ""),
+                        escapeCSV(roles),
+                        user.getActive(),
+                        user.getCreatedAt() != null ? user.getCreatedAt().format(df) : ""));
             }
 
             writer.flush();
@@ -361,7 +378,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         List<String> errors = new ArrayList<>();
         List<String> success = new ArrayList<>();
         int rowNumber = 0;
-        int totalRows = 0;
+        int skipped = 0;
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -378,140 +395,97 @@ public class UserManagementServiceImpl implements UserManagementService {
                 throw new RuntimeException("File CSV rỗng!");
             }
 
-            // Validate header (bỏ password)
-            String expectedHeader = "username,email,phone,address,departmentId";
-            if (!headerLine.toLowerCase().startsWith(expectedHeader.toLowerCase())) {
-                throw new RuntimeException("File CSV không đúng định dạng! Cần có: " + expectedHeader);
+            // Validate header: id,username,email
+            String[] headers = headerLine.split(",");
+            if (headers.length < 3 || !headers[0].trim().equalsIgnoreCase("id") 
+                || !headers[1].trim().equalsIgnoreCase("username")
+                || !headers[2].trim().equalsIgnoreCase("email")) {
+                throw new RuntimeException("File CSV không đúng định dạng! Cần có: id,username,email");
             }
 
             // Read data lines
             String line;
             while ((line = reader.readLine()) != null) {
                 rowNumber++;
-                totalRows++;
 
                 if (line.trim().isEmpty()) {
                     continue; // Skip empty lines
                 }
 
                 try {
-                    // Parse CSV line (handle quoted values)
-                    String[] values = parseCSVLine(line);
+                    String[] values = line.split(",");
 
                     if (values.length < 3) {
-                        errors.add("Dòng " + rowNumber + ": Thiếu dữ liệu bắt buộc (username, email, phone)");
+                        errors.add("Dòng " + rowNumber + ": Thiếu dữ liệu (cần id, username, email)");
                         continue;
                     }
 
-                    String username = values[0].trim();
-                    String email = values[1].trim();
-                    String phone = values[2].trim();
-                    String address = values.length > 3 ? values[3].trim() : "";
-                    String departmentIdStr = values.length > 4 ? values[4].trim() : "";
+                    String idStr = values[0].trim();
+                    String username = values[1].trim();
+                    String email = values[2].trim();
 
                     // Validate required fields
-                    if (username.isEmpty()) {
-                        errors.add("Dòng " + rowNumber + ": Username không được để trống");
+                    if (idStr.isEmpty() || username.isEmpty() || email.isEmpty()) {
+                        errors.add("Dòng " + rowNumber + ": Các trường không được để trống");
                         continue;
                     }
 
-                    if (username.length() < 3) {
-                        errors.add("Dòng " + rowNumber + ": Username phải có ít nhất 3 ký tự");
+                    Long id;
+                    try {
+                        id = Long.parseLong(idStr);
+                    } catch (NumberFormatException e) {
+                        errors.add("Dòng " + rowNumber + ": ID không hợp lệ");
                         continue;
                     }
 
-                    if (email.isEmpty()) {
-                        errors.add("Dòng " + rowNumber + ": Email không được để trống");
+                    // Skip if ID already exists
+                    if (userRepository.existsById(id)) {
+                        skipped++;
                         continue;
                     }
 
                     // Validate email format
                     if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                        errors.add("Dòng " + rowNumber + ": Email '" + email + "' không hợp lệ");
+                        errors.add("Dòng " + rowNumber + ": Email không hợp lệ");
                         continue;
                     }
 
-                    if (phone.isEmpty()) {
-                        errors.add("Dòng " + rowNumber + ": Phone không được để trống");
+                    // Check duplicate username
+                    if (userRepository.existsByUsername(username)) {
+                        errors.add("Dòng " + rowNumber + ": Username '" + username + "' đã tồn tại");
                         continue;
                     }
 
-                    // Validate phone (10-11 digits)
-                    if (!phone.matches("^[0-9]{10,11}$")) {
-                        errors.add("Dòng " + rowNumber + ": Số điện thoại '" + phone
-                                + "' không hợp lệ (phải 10-11 chữ số)");
-                        continue;
-                    }
+                    // Create new user with minimal info
+                    User newUser = new User();
+                    newUser.setId(id);
+                    newUser.setUsername(username);
+                    newUser.setEmail(email);
+                    newUser.setPassword(passwordEncoder.encode("123456")); // Default password
+                    newUser.setActive(true);
+                    
+                    // Set default STAFF role
+                    Role staffRole = roleRepository.findByName("ROLE_STAFF")
+                            .orElseThrow(() -> new RuntimeException("Role STAFF not found"));
+                    newUser.setRoles(Set.of(staffRole));
 
-                    // // Check duplicate username
-                    // if (userRepository.existsByUsername(username)) {
-                    // errors.add("Dòng " + rowNumber + ": Username '" + username + "' đã tồn tại");
-                    // continue;
-                    // }
-
-                    // Check duplicate email
-                    if (userRepository.existsByEmail(email)) {
-                        errors.add("Dòng " + rowNumber + ": Email '" + email + "' đã tồn tại");
-                        continue;
-                    }
-
-                    // Generate default password: Username@123
-                    String defaultPassword = username + "@123";
-
-                    // Create new User
-                    User user = new User();
-                    user.setUsername(username);
-                    user.setEmail(email);
-                    user.setPhone(phone);
-                    user.setPassword(passwordEncoder.encode(defaultPassword));
-                    user.setAddress(address);
-                    user.setActive(true);
-
-                    // Set Department if provided
-                    if (!departmentIdStr.isEmpty()) {
-                        try {
-                            Long departmentId = Long.parseLong(departmentIdStr);
-                            Department department = departmentRepository.findById(departmentId)
-                                    .orElse(null);
-                            if (department == null) {
-                                errors.add("Dòng " + rowNumber + ": Phòng ban ID " + departmentId + " không tồn tại");
-                                continue;
-                            }
-                            user.setDepartment(department);
-                        } catch (NumberFormatException e) {
-                            errors.add("Dòng " + rowNumber + ": Department ID không hợp lệ");
-                            continue;
-                        }
-                    }
-
-                    // Set Role Staff (ID = 3)
-                    Role staffRole = roleRepository.findById(3L)
-                            .orElseThrow(() -> new RuntimeException("Role Staff không tồn tại"));
-                    user.setRoles(Set.of(staffRole));
-
-                    // Save user
-                    userRepository.save(user);
-                    success.add("Dòng " + rowNumber + ": Import user '" + username + "' thành công (mật khẩu: "
-                            + defaultPassword + ")");
+                    userRepository.save(newUser);
+                    success.add("Dòng " + rowNumber + ": Tạo user '" + username + "' thành công");
 
                 } catch (Exception e) {
                     errors.add("Dòng " + rowNumber + ": " + e.getMessage());
                 }
             }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi đọc file CSV: " + e.getMessage(), e);
         }
 
-        // Prepare response
-        Map<String, Object> response = new HashMap<>();
-        response.put("total", totalRows);
-        response.put("success", success.size());
-        response.put("failed", errors.size());
-        response.put("errors", errors);
-        response.put("successMessages", success);
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalRows", rowNumber);
+        result.put("success", success.size());
+        result.put("skipped", skipped);
+        result.put("errors", errors);
+        result.put("successMessages", success);
 
-        return response;
+        return result;
     }
 
     // Helper method to parse CSV line with quoted values

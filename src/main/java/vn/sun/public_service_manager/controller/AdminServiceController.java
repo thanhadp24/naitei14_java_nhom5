@@ -15,7 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 @RequestMapping("/admin/services")
 @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF')")
-public class ServiceAdminController {
+public class AdminServiceController {
 
     private final ServiceManagementService serviceManagementService;
     private final ServiceTypeService serviceTypeService;
@@ -78,7 +78,7 @@ public class ServiceAdminController {
         redirectAttributes.addFlashAttribute("successMessage",
                 action + " dịch vụ thành công: " + savedService.getName());
 
-        return "redirect:/admin/services/edit/" + savedService.getId();
+        return "redirect:/admin/services";
     }
 
     @LogActivity(action = "Quản lý dịch vụ - Xóa dịch vụ", targetType = "SERVICE")

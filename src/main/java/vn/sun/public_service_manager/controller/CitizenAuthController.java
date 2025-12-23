@@ -69,7 +69,8 @@ public class CitizenAuthController {
                 citizen.setAddress(registrationDto.getAddress());
                 citizen.setPhone(registrationDto.getPhone());
                 citizen.setEmail(registrationDto.getEmail());
-                citizen.setPassword(passwordEncoder.encode(registrationDto.getPassword())); // MÃ HÓA
+                citizen.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
+                // // MÃ HÓA
 
                 Citizen savedCitizen = citizenService.save(citizen);
 
@@ -86,18 +87,32 @@ public class CitizenAuthController {
         // 2. API Đăng nhập
         @LogActivity(action = "Citizen Login", targetType = "CITIZEN AUTH", description = "Đăng nhập hệ thống công dân")
         @PostMapping("/login")
-        public ResponseEntity<JwtAuthResponse> login(@RequestBody LoginDto loginDto) {
-                // AuthenticationManager gọi CombinedUserDetailsService
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(loginDto.getNationalId(),
-                                                loginDto.getPassword()));
+        public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+                try {
+                        Authentication authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(loginDto.getNationalId(),
+                                                        loginDto.getPassword()));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // Tạo JWT Token chứa nationalId và Role (CITIZEN)
-                String token = jwtService.generateToken(loginDto.getNationalId());
-
-                return ResponseEntity.ok(new JwtAuthResponse(token));
+                        String token = jwtService.generateToken(loginDto.getNationalId());
+                        return ResponseEntity.ok(new JwtAuthResponse(token));
+                } catch (org.springframework.security.authentication.DisabledException ex) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                        .body(Map.of("success", false, "message", "Tài khoản đã bị vô hiệu hóa"));
+                } catch (org.springframework.security.authentication.LockedException ex) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                        .body(Map.of("success", false, "message", "Tài khoản bị khoá"));
+                } catch (org.springframework.security.authentication.BadCredentialsException ex) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(Map.of("success", false, "message",
+                                                        "Tên đăng nhập hoặc mật khẩu không đúng"));
+                } catch (org.springframework.security.core.AuthenticationException ex) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                        .body(Map.of("success", false, "message", "Xác thực thất bại"));
+                } catch (Exception ex) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .body(Map.of("success", false, "message", "Lỗi server"));
+                }
         }
 
         // 3. API Đăng xuất

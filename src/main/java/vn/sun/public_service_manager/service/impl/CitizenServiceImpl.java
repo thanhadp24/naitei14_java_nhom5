@@ -116,7 +116,7 @@ public class CitizenServiceImpl implements CitizenService {
             if (citizenRepository.existsByPhone(citizen.getPhone())) {
                 throw new EmailAlreadyExistsException("Công dân với số điện thoại đã tồn tại.");
             }
-            citizen.setPassword(passwordEncoder.encode(citizen.getPassword()));
+            // citizen.setPassword(passwordEncoder.encode(citizen.getPassword()));
             return citizenRepository.save(citizen);
         } else {
             Citizen citizenInDb = citizenRepository.findById(citizen.getId())

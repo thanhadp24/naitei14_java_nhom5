@@ -34,9 +34,9 @@ public class AdminController {
     private final ActivityLogRepository activityLogRepository;
 
     public AdminController(UserRepository userRepository,
-                          ApplicationRepository applicationRepository,
-                          ApplicationStatusRepository applicationStatusRepository,
-                          ActivityLogRepository activityLogRepository) {
+            ApplicationRepository applicationRepository,
+            ApplicationStatusRepository applicationStatusRepository,
+            ActivityLogRepository activityLogRepository) {
         this.userRepository = userRepository;
         this.applicationRepository = applicationRepository;
         this.applicationStatusRepository = applicationStatusRepository;
@@ -65,16 +65,15 @@ public class AdminController {
         // Load real statistics from database
         long totalUsers = userRepository.count();
         long totalApplications = applicationRepository.count();
-        
+
         // Count applications by latest status
         long processingCount = applicationStatusRepository.countByLatestStatus(StatusEnum.PROCESSING);
         long approvedCount = applicationStatusRepository.countByLatestStatus(StatusEnum.APPROVED);
-        
+
         // Load 5 most recent activity logs
         List<ActivityLog> recentActivities = activityLogRepository.findAll(
-            PageRequest.of(0, 5, Sort.by("createdAt").descending())
-        ).getContent();
-        
+                PageRequest.of(0, 5, Sort.by("createdAt").descending())).getContent();
+
         model.addAttribute("totalUsers", totalUsers);
         model.addAttribute("totalApplications", totalApplications);
         model.addAttribute("processingCount", processingCount);
@@ -97,27 +96,29 @@ public class AdminController {
     // @GetMapping("/users")
     // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     // public String userManagement(Model model, Authentication authentication) {
-    //     model.addAttribute("username", authentication.getName());
-    //     return "admin/user_management";
+    // model.addAttribute("username", authentication.getName());
+    // return "admin/user_management";
     // }
 
     // @GetMapping("/users/{id}/detail")
     // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    // public String userDetail(@org.springframework.web.bind.annotation.PathVariable Long id,
-    //         @RequestParam String type,
-    //         Model model,
-    //         Authentication authentication) {
-    //     model.addAttribute("username", authentication.getName());
-    //     model.addAttribute("userId", id);
-    //     model.addAttribute("userType", type);
-    //     return "admin/user_detail";
+    // public String
+    // userDetail(@org.springframework.web.bind.annotation.PathVariable Long id,
+    // @RequestParam String type,
+    // Model model,
+    // Authentication authentication) {
+    // model.addAttribute("username", authentication.getName());
+    // model.addAttribute("userId", id);
+    // model.addAttribute("userType", type);
+    // return "admin/user_detail";
     // }
 
     // Moved to AdminDepartmentController
     // @GetMapping("/departments")
     // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    // public String departmentManagement(Model model, Authentication authentication) {
-    //     model.addAttribute("username", authentication.getName());
-    //     return "admin/department_management";
+    // public String departmentManagement(Model model, Authentication
+    // authentication) {
+    // model.addAttribute("username", authentication.getName());
+    // return "admin/department_management";
     // }
 }

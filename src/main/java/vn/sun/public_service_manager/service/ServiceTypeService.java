@@ -1,6 +1,7 @@
 package vn.sun.public_service_manager.service;
 
 import vn.sun.public_service_manager.entity.ServiceType;
+import vn.sun.public_service_manager.exception.ResourceNotFoundException;
 import vn.sun.public_service_manager.repository.ServiceTypeRepository;
 import vn.sun.public_service_manager.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,21 +36,15 @@ public class ServiceTypeService {
     @Transactional
     public ServiceType saveServiceType(ServiceType serviceType) {
 
-        String category = serviceType.getCategory().trim();
-        serviceType.setCategory(category);
-        Optional<ServiceType> existingType = serviceTypeRepository.findByCategoryIgnoreCase(category);
+        Optional<ServiceType> existingType = serviceTypeRepository.findByCategoryIgnoreCase(serviceType.getCategory());
 
         if (existingType.isPresent()) {
             Long existingId = existingType.get().getId();
             if (serviceType.getId() == null || !existingId.equals(serviceType.getId())) {
-                throw new DataIntegrityViolationException("Category '" + category + "' already exists.");
+                throw new ResourceNotFoundException("Category '" + serviceType.getCategory() + "' already exists.");
             }
         }
-        try {
-            return serviceTypeRepository.save(serviceType);
-        } catch (DataIntegrityViolationException e) {
-            throw new DataIntegrityViolationException("Failed to save due to database constraint violation.");
-        }
+        return serviceTypeRepository.save(serviceType);
     }
 
     @Transactional

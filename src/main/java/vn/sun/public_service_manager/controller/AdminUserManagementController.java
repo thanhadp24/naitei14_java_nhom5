@@ -56,7 +56,17 @@ public class AdminUserManagementController {
             @RequestParam(defaultValue = "DESC") String sortDir,
             Model model) {
 
-        UserFilterDTO filter = new UserFilterDTO(type, role, search, active, departmentId);
+        // Sanitize / normalize input
+        page = Math.max(page, 1);
+        size = Math.min(Math.max(size, 1), 100); // prevent excessive page size
+        String q = (search == null ? null : search.trim());
+        String roleFilter = (role == null || role.isBlank()) ? null : role.trim();
+
+        // Allowlist for sortable fields to avoid SQL errors / injection risk
+        List<String> allowedSortFields = List.of("createdAt", "username", "fullName", "email");
+        if (!allowedSortFields.contains(sortBy)) {
+            sortBy = "createdAt";
+        }
 
         Sort sort = sortDir.equalsIgnoreCase("ASC")
                 ? Sort.by(sortBy).ascending()
@@ -64,20 +74,31 @@ public class AdminUserManagementController {
 
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<UserListDTO> users = userManagementService.getAllUsers(filter, pageable);
+        // Build filter DTO
+        UserFilterDTO filter = new UserFilterDTO(type, roleFilter, q, active, departmentId);
 
-        // Load departments and roles for filters
-        List<Department> departments = departmentRepository.findAll();
-        List<Role> roles = roleRepository.findAll();
+        // Query service
+        Page<UserListDTO> usersPage = userManagementService.getAllUsers(filter, pageable);
 
-        model.addAttribute("users", users.getContent());
+        // If requested page is out of range, load last page
+        if (usersPage.getTotalPages() > 0 && page > usersPage.getTotalPages()) {
+            pageable = PageRequest.of(usersPage.getTotalPages() - 1, size, sort);
+            usersPage = userManagementService.getAllUsers(filter, pageable);
+            page = usersPage.getTotalPages();
+        }
+
+        // Add attributes for view (including useful pagination/sort helpers)
+        model.addAttribute("users", usersPage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", users.getTotalPages());
-        model.addAttribute("totalItems", users.getTotalElements());
+        model.addAttribute("totalPages", usersPage.getTotalPages());
+        model.addAttribute("totalItems", usersPage.getTotalElements());
         model.addAttribute("size", size);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equalsIgnoreCase("ASC") ? "DESC" : "ASC");
         model.addAttribute("filter", filter);
-        model.addAttribute("departments", departments);
-        model.addAttribute("roles", roles);
+        model.addAttribute("departments", departmentRepository.findAll());
+        model.addAttribute("roles", roleRepository.findAll());
 
         return "admin/user_management";
     }
@@ -197,13 +218,13 @@ public class AdminUserManagementController {
             int skipped = (int) result.get("skipped");
             @SuppressWarnings("unchecked")
             List<String> errors = (List<String>) result.get("errors");
-            
+
             if (success > 0) {
-                redirectAttributes.addFlashAttribute("successMessage", 
-                    "Import thành công " + success + " người dùng" + 
-                    (skipped > 0 ? ", bỏ qua " + skipped + " ID trùng" : ""));
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Import thành công " + success + " người dùng" +
+                                (skipped > 0 ? ", bỏ qua " + skipped + " ID trùng" : ""));
             }
-            
+
             if (!errors.isEmpty()) {
                 redirectAttributes.addFlashAttribute("importErrors", errors);
                 if (success == 0) {

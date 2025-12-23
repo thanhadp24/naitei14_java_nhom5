@@ -1,10 +1,9 @@
 package vn.sun.public_service_manager.service;
 
 import vn.sun.public_service_manager.entity.Citizen;
+import vn.sun.public_service_manager.entity.User;
 import vn.sun.public_service_manager.repository.CitizenRepository;
 import vn.sun.public_service_manager.repository.UserRespository;
-import vn.sun.public_service_manager.entity.User;
-import vn.sun.public_service_manager.entity.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,16 +21,18 @@ public class CombinedUserDetailsService implements UserDetailsService {
 
     @Autowired
     private CitizenRepository citizenRepository;
+
     @Autowired
     private UserRespository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
 
-        // 1. THỬ TÌM KIẾM USER (ADMIN/STAFF) BẰNG USERNAME
+        /* ================= USER (ADMIN / STAFF) ================= */
         Optional<User> userOpt = userRepository.findByUsername(identifier);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+
             List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                     .map(role -> new SimpleGrantedAuthority(role.getName()))
                     .collect(Collectors.toList());
@@ -39,27 +40,31 @@ public class CombinedUserDetailsService implements UserDetailsService {
             return new org.springframework.security.core.userdetails.User(
                     user.getUsername(),
                     user.getPassword(),
-                    user.getActive() ? authorities : Collections.emptyList()
-            );
+                    user.getActive(), // ✅ enabled
+                    true, // accountNonExpired
+                    true, // credentialsNonExpired
+                    true, // accountNonLocked
+                    authorities);
         }
 
-        // 2. THỬ TÌM KIẾM CITIZEN BẰNG NATIONAL ID
+        /* ================= CITIZEN ================= */
         Optional<Citizen> citizenOpt = citizenRepository.findByNationalId(identifier);
-
         if (citizenOpt.isPresent()) {
             Citizen citizen = citizenOpt.get();
-            // Gán Role cố định cho Citizen
+
             List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                     new SimpleGrantedAuthority("ROLE_CITIZEN"));
 
             return new org.springframework.security.core.userdetails.User(
-                    citizen.getNationalId(), // Dùng nationalId làm username của Spring Security
+                    citizen.getNationalId(),
                     citizen.getPassword(),
-                    authorities
-            );
+                    citizen.isActive(), // ✅ enabled
+                    true,
+                    true,
+                    true,
+                    authorities);
         }
 
-        // Nếu không tìm thấy ở cả hai nơi
         throw new UsernameNotFoundException("User not found with identifier: " + identifier);
     }
 }

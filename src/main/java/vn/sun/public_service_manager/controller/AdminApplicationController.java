@@ -1,5 +1,7 @@
 package vn.sun.public_service_manager.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +21,9 @@ import vn.sun.public_service_manager.dto.ApplicationFilterDTO;
 import vn.sun.public_service_manager.dto.request.AssignStaffDTO;
 import vn.sun.public_service_manager.dto.request.UpdateApplicationStatusDTO;
 import vn.sun.public_service_manager.dto.response.ApplicationResDTO;
+import vn.sun.public_service_manager.entity.Role;
 import vn.sun.public_service_manager.entity.User;
+import vn.sun.public_service_manager.repository.RoleRepository;
 import vn.sun.public_service_manager.repository.UserRepository;
 import vn.sun.public_service_manager.service.ApplicationService;
 import vn.sun.public_service_manager.service.ServiceTypeService;
@@ -37,6 +41,7 @@ public class AdminApplicationController {
     private final UserRepository userRepository;
     private final vn.sun.public_service_manager.repository.ApplicationDocumentRepository documentRepository;
     private final vn.sun.public_service_manager.repository.ServiceRepository serviceRepository;
+    private final RoleRepository roleRepository;
 
     @GetMapping
     public String listApplications(
@@ -69,7 +74,7 @@ public class AdminApplicationController {
         boolean isStaff = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_STAFF"));
-        
+
         boolean isManager = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_MANAGER"));
@@ -98,18 +103,6 @@ public class AdminApplicationController {
         // Get applications
         Page<ApplicationDTO> applicationPage = applicationService.getAllApplications(filter, pageable);
 
-        // Debug log
-        System.out.println("========== DEBUG APPLICATION LIST ==========");
-        System.out.println("Username: " + username);
-        System.out.println("Is Staff: " + isStaff);
-        System.out.println("Is Manager: " + isManager);
-        System.out.println("Filter departmentId: " + filter.getDepartmentId());
-        System.out.println("Total elements found: " + applicationPage.getTotalElements());
-        System.out.println("Content size: " + applicationPage.getContent().size());
-        applicationPage.getContent().forEach(app -> 
-            System.out.println("  - App: " + app.getApplicationCode() + ", Service: " + app.getServiceName() + ", Status: " + app.getStatus()));
-        System.out.println("==========================================");
-
         // Add to model
         model.addAttribute("applications", applicationPage.getContent());
         model.addAttribute("currentPage", page);
@@ -120,16 +113,18 @@ public class AdminApplicationController {
         // Add filter values to keep in form
         model.addAttribute("filter", filter);
         model.addAttribute("statuses", StatusEnum.values());
-        
+
         // Load services theo department nếu là MANAGER hoặc STAFF
         List<vn.sun.public_service_manager.entity.Service> services;
         if ((isManager || isStaff) && currentUser.getDepartment() != null) {
-            services = serviceRepository.findByResponsibleDepartmentId(currentUser.getDepartment().getId(), Pageable.unpaged()).getContent();
+            services = serviceRepository
+                    .findByResponsibleDepartmentId(currentUser.getDepartment().getId(), Pageable.unpaged())
+                    .getContent();
         } else {
             services = serviceRepository.findAll();
         }
         model.addAttribute("services", services);
-        
+
         // Also load serviceTypes for compatibility
         List<vn.sun.public_service_manager.entity.ServiceType> serviceTypes;
         if ((isManager || isStaff) && currentUser.getDepartment() != null) {
@@ -148,22 +143,26 @@ public class AdminApplicationController {
             ApplicationResDTO application = applicationService.getApplicationById(id);
             model.addAttribute("applicationDetail", application);
             model.addAttribute("statuses", StatusEnum.values());
-            
-            // Lấy danh sách staff theo department chịu trách nhiệm cho service của application
-            List<User> staffList;
-            
+
+            // Lấy danh sách staff theo department chịu trách nhiệm cho service của
+            // application
+            List<User> staffList = new ArrayList<>();
+
             // Lấy service từ application
             var service = serviceRepository.findById(application.getService().getId())
                     .orElseThrow(() -> new RuntimeException("Service not found"));
-            
+
+            Role staffRole = roleRepository.findByName("ROLE_STAFF").orElse(null);
             // Nếu service có responsible department, lấy staff của department đó
             if (service.getResponsibleDepartment() != null) {
-                staffList = userRepository.findStaffByDepartmentId(service.getResponsibleDepartment().getId());
+                staffList = userRepository.findByDepartmentAndRoles(service.getResponsibleDepartment(),
+                        Collections.singletonList(staffRole));
+
             } else {
                 // Nếu service không có department chịu trách nhiệm, không hiện staff nào
                 staffList = List.of();
             }
-            
+
             model.addAttribute("staffList", staffList);
             return "admin/application_detail";
         } catch (Exception e) {
@@ -207,9 +206,8 @@ public class AdminApplicationController {
     public void downloadDocument(
             @PathVariable Long documentId,
             jakarta.servlet.http.HttpServletResponse response) throws Exception {
-        
-        vn.sun.public_service_manager.entity.ApplicationDocument document = 
-            documentRepository.findById(documentId)
+
+        vn.sun.public_service_manager.entity.ApplicationDocument document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found with ID: " + documentId));
 
         String citizenNationalId = document.getApplication().getCitizen().getNationalId();
@@ -220,8 +218,8 @@ public class AdminApplicationController {
         java.nio.file.Path filePath = java.nio.file.Paths.get(uploadDir, citizenNationalId, fileName);
 
         if (!java.nio.file.Files.exists(filePath)) {
-            response.sendError(jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND, 
-                "File not found: " + filePath.toAbsolutePath());
+            response.sendError(jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND,
+                    "File not found: " + filePath.toAbsolutePath());
             return;
         }
 
@@ -232,8 +230,8 @@ public class AdminApplicationController {
 
         // Write file to response
         try (java.io.InputStream inputStream = java.nio.file.Files.newInputStream(filePath);
-             java.io.OutputStream outputStream = response.getOutputStream()) {
-            
+                java.io.OutputStream outputStream = response.getOutputStream()) {
+
             byte[] buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -260,24 +258,24 @@ public class AdminApplicationController {
             response.getOutputStream().write(0xBF);
 
             java.io.Writer writer = new java.io.OutputStreamWriter(
-                    response.getOutputStream(), 
+                    response.getOutputStream(),
                     java.nio.charset.StandardCharsets.UTF_8);
-            
+
             // Get current user and role
             String username = authentication.getName();
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            
+
             boolean isStaff = authentication.getAuthorities().stream()
                     .map(org.springframework.security.core.GrantedAuthority::getAuthority)
                     .anyMatch(role -> role.equals("ROLE_STAFF"));
-            
+
             boolean isManager = authentication.getAuthorities().stream()
                     .map(org.springframework.security.core.GrantedAuthority::getAuthority)
                     .anyMatch(role -> role.equals("ROLE_MANAGER"));
-            
+
             ApplicationFilterDTO filter = new ApplicationFilterDTO();
-            
+
             if (isStaff) {
                 // STAFF: only export their assigned applications
                 filter.setAssignedStaffId(currentUser.getId());
@@ -294,7 +292,7 @@ public class AdminApplicationController {
                 // ADMIN: export all applications
                 applicationService.exportApplicationsToCsv(writer);
             }
-            
+
             writer.flush();
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi xuất file CSV Hồ sơ", e);

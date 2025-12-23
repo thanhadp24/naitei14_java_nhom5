@@ -68,4 +68,5 @@ public class ServiceTypeAdminController {
         }
         return "redirect:/admin/servicetypes";
     }
+
 }

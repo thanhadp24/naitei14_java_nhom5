@@ -1,7 +1,6 @@
 package vn.sun.public_service_manager.controller;
 
 import org.springframework.data.domain.Page;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,20 +10,30 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import vn.sun.public_service_manager.entity.Citizen;
 import vn.sun.public_service_manager.service.CitizenService;
+import vn.sun.public_service_manager.service.UserManagementService;
+
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/citizens")
 public class CitizenWebController {
 
     private final CitizenService citizenService;
+    private final UserManagementService userManagementService;
 
-    public CitizenWebController(CitizenService citizenService) {
+    public CitizenWebController(CitizenService citizenService, UserManagementService userManagementService) {
         this.citizenService = citizenService;
+        this.userManagementService = userManagementService;
     }
 
     @GetMapping
@@ -96,14 +105,74 @@ public class CitizenWebController {
         return "citizen/citizen_form";
     }
 
-    @GetMapping("/{id}/toggle")
+    @GetMapping("/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         try {
             citizenService.deleteById(id);
-            ra.addFlashAttribute("message", "Cập nhật trạng thái công dân thành công!");
+            ra.addFlashAttribute("message", "Xóa công dân thành công!");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/citizens";
     }
+
+    @GetMapping("/export")
+    public void exportCitizens(HttpServletResponse response) {
+        try {
+            response.setContentType("text/csv; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=\"citizens_" + System.currentTimeMillis() + ".csv\"");
+
+            Writer writer = new OutputStreamWriter(
+                    response.getOutputStream(),
+                    StandardCharsets.UTF_8);
+
+            userManagementService.exportCitizensToCsv(writer);
+
+            writer.flush();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xuất file CSV", e);
+        }
+    }
+
+    @PostMapping("/import")
+    public String importCitizens(
+            @RequestParam("file") MultipartFile file,
+            RedirectAttributes ra) {
+
+        if (file.isEmpty()) {
+            ra.addFlashAttribute("error", "File không được để trống!");
+            return "redirect:/admin/citizens";
+        }
+
+        if (!file.getOriginalFilename().endsWith(".csv")) {
+            ra.addFlashAttribute("error", "Chỉ chấp nhận file CSV!");
+            return "redirect:/admin/citizens";
+        }
+
+        try {
+            Map<String, Object> result = userManagementService.importCitizensFromCsv(file);
+
+            int total = (int) result.get("total");
+            int success = (int) result.get("success");
+            int failed = (int) result.get("failed");
+
+            if (failed > 0) {
+                ra.addFlashAttribute("message",
+                        String.format("Import hoàn tất: %d/%d thành công, %d thất bại",
+                                success, total, failed));
+            } else {
+                ra.addFlashAttribute("message",
+                        String.format("Import thành công %d công dân!", success));
+            }
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Lỗi khi import: " + e.getMessage());
+        }
+
+        return "redirect:/admin/citizens";
+    }
+
 }

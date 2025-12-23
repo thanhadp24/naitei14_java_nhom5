@@ -17,9 +17,9 @@
                 <div class="container-fluid">
                     <div>
                         <h2 class="h4 mb-1">
-                            <i class="bi bi-people-fill text-primary"></i> Quản lý công dân
+                            <i class="bi bi-gear-fill text-primary"></i> Quản lý dịch vụ
                         </h2>
-                        <p class="text-muted mb-0">Quản lý công dân</p>
+                        <p class="text-muted mb-0">Quản lý dịch vụ công</p>
                     </div>
                     <div class="card mt-3">
                         <div
@@ -29,7 +29,7 @@
                                 <a th:href="@{/admin/services/new}" class="btn btn-primary btn-sm">
                                     <i class="bi bi-plus-circle"></i> Tạo mới
                                 </a>
-                                <a href="/api/v1/admin/services/export" class="btn btn-light btn-sm">
+                                <a th:href="@{/api/v1/admin/services/export}" class="btn btn-light btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </a>
                                 <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
@@ -96,7 +96,8 @@
                                             <td th:text="${service.code}"></td>
                                             <td>
                                                 <span th:text="${service.name}"></span>
-                                                <span th:if="${service.active == false}" class="badge bg-warning text-dark ms-2">
+                                                <span th:if="${service.active == false}"
+                                                    class="badge bg-warning text-dark ms-2">
                                                     <i class="bi bi-exclamation-triangle"></i> Đã vô hiệu hóa
                                                 </span>
                                             </td>
@@ -239,7 +240,7 @@
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                     <i class="bi bi-x-circle"></i> Đóng
                                 </button>
-                                <button type="button" class="btn btn-success" onclick="importFromCsv()">
+                                <button type="button" class="btn btn-success" onclick="importFromCsv(event)">
                                     <i class="bi bi-upload"></i> Import
                                 </button>
                             </div>
@@ -256,7 +257,7 @@
 
     <script>
         // Import services from CSV
-        function importFromCsv() {
+        function importFromCsv(event) {
             const fileInput = document.getElementById('csvFileInput');
             const file = fileInput.files[0];
             const resultAlert = document.getElementById('importResultAlert');
@@ -293,9 +294,11 @@
             resultAlert.style.display = 'block';
 
             // Disable import button
-            const importBtn = event.target;
-            importBtn.disabled = true;
-            importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang import...';
+            const importBtn = event?.target;
+            if (importBtn) {
+                importBtn.disabled = true;
+                importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang import...';
+            }
 
             fetch('/api/v1/admin/services/import', {
                 method: 'POST',
@@ -361,8 +364,10 @@
                 })
                 .finally(() => {
                     // Re-enable import button
-                    importBtn.disabled = false;
-                    importBtn.innerHTML = '<i class="bi bi-upload"></i> Import';
+                    if (importBtn) {
+                        importBtn.disabled = false;
+                        importBtn.innerHTML = '<i class="bi bi-upload"></i> Import';
+                    }
                 });
         }
 

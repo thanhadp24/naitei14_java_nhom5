@@ -31,6 +31,9 @@
                             <i class="bi bi-people-fill"></i> Danh sách người dùng
                         </h5>
                         <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                <i class="bi bi-plus-circle"></i> Thêm người dùng
+                            </button>
                             <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
                                 <i class="bi bi-upload"></i> Import CSV
                             </button>
@@ -275,6 +278,88 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-upload"></i> Import
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm người dùng mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/users/create}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="type" value="USER">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="username" required minlength="3" placeholder="Nhập username">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" required placeholder="Nhập email">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="password" required minlength="6" placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" class="form-control" name="phone" pattern="[0-9]{10,11}" placeholder="Nhập số điện thoại (10-11 số)">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phòng ban</label>
+                                <select class="form-select" name="departmentId">
+                                    <option value="">-- Chọn phòng ban --</option>
+                                    <option th:each="dept : ${departments}" 
+                                            th:value="${dept.id}" 
+                                            th:text="${dept.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                                <div>
+                                    <div th:each="role : ${roles}" class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="roleIds" 
+                                               th:value="${role.id}" 
+                                               th:id="'createRole' + ${role.id}">
+                                        <label class="form-check-label" th:for="'createRole' + ${role.id}" th:text="${role.name}"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Địa chỉ</label>
+                            <textarea class="form-control" name="address" rows="2" placeholder="Nhập địa chỉ"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="active" value="true" checked>
+                                <label class="form-check-label">Trạng thái hoạt động</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Tạo người dùng
                         </button>
                     </div>
                 </form>

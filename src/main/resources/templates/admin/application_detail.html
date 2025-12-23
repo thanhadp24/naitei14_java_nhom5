@@ -299,6 +299,7 @@
                                         <select class="form-select" id="staffId" name="staffId" required>
                                             <option value="">-- Chọn nhân viên --</option>
                                             <option th:each="staff : ${staffList}" th:value="${staff.id}"
+                                                th:selected="${applicationDetail.assignedStaff != null && applicationDetail.assignedStaff.id == staff.id}"
                                                 th:text="${staff.email + ' (' + staff.username + ')'}">
                                             </option>
                                         </select>

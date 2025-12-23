@@ -31,10 +31,15 @@
                             <i class="bi bi-people-fill"></i> Danh sách người dùng
                         </h5>
                         <div class="d-flex gap-2">
+<<<<<<< HEAD
+                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#importModal">
+=======
                             <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
                                 <i class="bi bi-plus-circle"></i> Thêm người dùng
                             </button>
                             <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+>>>>>>> 425ba50b25b67c58227dff07e5a03e1bcd7bedfd
                                 <i class="bi bi-upload"></i> Import CSV
                             </button>
                             <a th:href="@{/admin/users/export}" class="btn btn-light btn-sm">
@@ -45,14 +50,16 @@
                             </span>
                         </div>
                     </div>
-                    
-                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show m-3"
+                        role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i>
                         <span th:text="${successMessage}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
 
-                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show m-3"
+                        role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
                         <span th:text="${errorMessage}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -70,10 +77,8 @@
                                         <label class="form-label">Vai trò</label>
                                         <select class="form-select" name="role">
                                             <option value="">Tất cả</option>
-                                            <option th:each="r : ${roles}" 
-                                                    th:value="${r.name}" 
-                                                    th:text="${r.name}"
-                                                    th:selected="${filter.role == r.name}">
+                                            <option th:each="r : ${roles}" th:value="${r.name}" th:text="${r.name}"
+                                                th:selected="${filter.role == r.name}">
                                             </option>
                                         </select>
                                     </div>
@@ -81,10 +86,8 @@
                                         <label class="form-label">Phòng ban</label>
                                         <select class="form-select" name="departmentId">
                                             <option value="">Tất cả phòng ban</option>
-                                            <option th:each="dept : ${departments}" 
-                                                    th:value="${dept.id}" 
-                                                    th:text="${dept.name}"
-                                                    th:selected="${filter.departmentId == dept.id}">
+                                            <option th:each="dept : ${departments}" th:value="${dept.id}"
+                                                th:text="${dept.name}" th:selected="${filter.departmentId == dept.id}">
                                             </option>
                                         </select>
                                     </div>
@@ -92,15 +95,16 @@
                                         <label class="form-label">Trạng thái</label>
                                         <select class="form-select" name="active">
                                             <option value="">Tất cả</option>
-                                            <option value="true" th:selected="${filter.active == true}">Đang hoạt động</option>
-                                            <option value="false" th:selected="${filter.active == false}">Không hoạt động</option>
+                                            <option value="true" th:selected="${filter.active == true}">Đang hoạt động
+                                            </option>
+                                            <option value="false" th:selected="${filter.active == false}">Không hoạt
+                                                động</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Tìm kiếm</label>
-                                        <input type="text" class="form-control" name="search" 
-                                               th:value="${filter.search}"
-                                               placeholder="Username, email...">
+                                        <input type="text" class="form-control" name="search"
+                                            th:value="${filter.search}" placeholder="Username, email...">
                                     </div>
                                 </div>
                                 <div class="row mt-3">
@@ -143,9 +147,8 @@
                                         <td th:text="${user.email}"></td>
                                         <td th:text="${user.departmentName ?: 'N/A'}"></td>
                                         <td>
-                                            <span th:each="role, iterStat : ${user.roles}" 
-                                                  class="badge bg-info me-1"
-                                                  th:text="${role}"></span>
+                                            <span th:each="role, iterStat : ${user.roles}" class="badge bg-info me-1"
+                                                th:text="${role}"></span>
                                         </td>
                                         <td>
                                             <span th:if="${user.active}" class="badge bg-success">Hoạt động</span>
@@ -153,35 +156,28 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a th:href="@{/admin/users/{id}(id=${user.id}, type='USER')}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Xem chi tiết">
+                                                <a th:href="@{/admin/users/{id}(id=${user.id}, type='USER')}"
+                                                    class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                
+
                                                 <!-- Edit Button -->
-                                                <button type="button"
-                                                        class="btn btn-sm btn-outline-info btn-edit-user"
-                                                        th:data-user-id="${user.id}"
-                                                        th:data-username="${user.username}"
-                                                        th:data-email="${user.email}"
-                                                        th:data-phone="${user.phone ?: ''}"
-                                                        th:data-address="${user.address ?: ''}"
-                                                        th:data-department-id="${user.departmentId ?: ''}"
-                                                        th:data-role-ids="${user.roleIds != null ? #strings.arrayJoin(user.roleIds, ',') : ''}"
-                                                        th:data-active="${user.active}"
-                                                        title="Chỉnh sửa">
+                                                <button type="button" class="btn btn-sm btn-outline-info btn-edit-user"
+                                                    th:data-user-id="${user.id}" th:data-username="${user.username}"
+                                                    th:data-email="${user.email}" th:data-phone="${user.phone ?: ''}"
+                                                    th:data-address="${user.address ?: ''}"
+                                                    th:data-department-id="${user.departmentId ?: ''}"
+                                                    th:data-role-ids="${user.roleIds != null ? #strings.arrayJoin(user.roleIds, ',') : ''}"
+                                                    th:data-active="${user.active}" title="Chỉnh sửa">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                
+
                                                 <!-- Toggle Active/Block Button -->
-                                                <button type="button"
-                                                        class="btn btn-sm btn-toggle-status"
-                                                        th:classappend="${user.active ? 'btn-outline-warning' : 'btn-outline-success'}"
-                                                        th:data-user-id="${user.id}"
-                                                        th:data-active="${!user.active}"
-                                                        th:data-action="${user.active ? 'chặn' : 'mở khóa'}"
-                                                        th:title="${user.active ? 'Chặn người dùng' : 'Mở khóa'}">
+                                                <button type="button" class="btn btn-sm btn-toggle-status"
+                                                    th:classappend="${user.active ? 'btn-outline-warning' : 'btn-outline-success'}"
+                                                    th:data-user-id="${user.id}" th:data-active="${!user.active}"
+                                                    th:data-action="${user.active ? 'chặn' : 'mở khóa'}"
+                                                    th:title="${user.active ? 'Chặn người dùng' : 'Mở khóa'}">
                                                     <i th:class="${user.active ? 'bi bi-lock' : 'bi bi-unlock'}"></i>
                                                 </button>
                                             </div>
@@ -266,7 +262,8 @@
                 <form th:action="@{/admin/users/import}" method="post" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> File CSV cần có 3 cột: <strong>id, username, email</strong>
+                            <i class="bi bi-info-circle"></i> File CSV cần có 3 cột: <strong>id, username,
+                                email</strong>
                             <br>Nếu ID đã tồn tại, bản ghi sẽ bị bỏ qua.
                         </div>
                         <div class="mb-3">
@@ -378,7 +375,7 @@
                 <form id="editUserForm" method="post">
                     <div class="modal-body">
                         <input type="hidden" name="type" value="USER">
-                        
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Username <span class="text-danger">*</span></label>
@@ -389,45 +386,45 @@
                                 <input type="email" class="form-control" id="editEmail" name="email" required>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Số điện thoại</label>
-                                <input type="text" class="form-control" id="editPhone" name="phone" placeholder="Nhập số điện thoại">
+                                <input type="text" class="form-control" id="editPhone" name="phone"
+                                    placeholder="Nhập số điện thoại">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Phòng ban</label>
                                 <select class="form-select" id="editDepartmentId" name="departmentId">
                                     <option value="">-- Chọn phòng ban --</option>
-                                    <option th:each="dept : ${departments}" 
-                                            th:value="${dept.id}" 
-                                            th:text="${dept.name}"></option>
+                                    <option th:each="dept : ${departments}" th:value="${dept.id}"
+                                        th:text="${dept.name}"></option>
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Địa chỉ</label>
-                            <textarea class="form-control" id="editAddress" name="address" rows="2" placeholder="Nhập địa chỉ"></textarea>
+                            <textarea class="form-control" id="editAddress" name="address" rows="2"
+                                placeholder="Nhập địa chỉ"></textarea>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Vai trò <span class="text-danger">*</span></label>
                             <div id="editRolesList">
                                 <div th:each="role : ${roles}" class="form-check">
-                                    <input class="form-check-input edit-role-checkbox" 
-                                           type="checkbox" 
-                                           name="roleIds" 
-                                           th:value="${role.id}" 
-                                           th:id="'editRole' + ${role.id}">
-                                    <label class="form-check-label" th:for="'editRole' + ${role.id}" th:text="${role.name}"></label>
+                                    <input class="form-check-input edit-role-checkbox" type="checkbox" name="roleIds"
+                                        th:value="${role.id}" th:id="'editRole' + ${role.id}">
+                                    <label class="form-check-label" th:for="'editRole' + ${role.id}"
+                                        th:text="${role.name}"></label>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="editActive" name="active" value="true">
+                                <input class="form-check-input" type="checkbox" id="editActive" name="active"
+                                    value="true">
                                 <label class="form-check-label" for="editActive">Trạng thái hoạt động</label>
                             </div>
                         </div>
@@ -445,31 +442,31 @@
 
     <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Toggle user status buttons
-            document.querySelectorAll('.btn-toggle-status').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+            document.querySelectorAll('.btn-toggle-status').forEach(function (btn) {
+                btn.addEventListener('click', function () {
                     const userId = this.getAttribute('data-user-id');
                     const newActiveStatus = this.getAttribute('data-active');
                     const action = this.getAttribute('data-action');
-                    
+
                     if (confirm('Bạn có chắc chắn muốn ' + action + ' người dùng này?')) {
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '/admin/users/' + userId + '/toggle-active';
-                        
+
                         const typeInput = document.createElement('input');
                         typeInput.type = 'hidden';
                         typeInput.name = 'type';
                         typeInput.value = 'USER';
-                        
+
                         const activeInput = document.createElement('input');
                         activeInput.type = 'hidden';
                         activeInput.name = 'active';
                         activeInput.value = newActiveStatus;
-                        
+
                         form.appendChild(typeInput);
                         form.appendChild(activeInput);
                         document.body.appendChild(form);
@@ -477,10 +474,10 @@
                     }
                 });
             });
-            
+
             // Edit user buttons
-            document.querySelectorAll('.btn-edit-user').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+            document.querySelectorAll('.btn-edit-user').forEach(function (btn) {
+                btn.addEventListener('click', function () {
                     const userId = this.getAttribute('data-user-id');
                     const username = this.getAttribute('data-username');
                     const email = this.getAttribute('data-email');
@@ -489,7 +486,7 @@
                     const departmentId = this.getAttribute('data-department-id');
                     const roleIds = this.getAttribute('data-role-ids');
                     const active = this.getAttribute('data-active') === 'true';
-                    
+
                     // Fill form fields
                     document.getElementById('editUsername').value = username || '';
                     document.getElementById('editEmail').value = email || '';
@@ -497,25 +494,25 @@
                     document.getElementById('editAddress').value = address || '';
                     document.getElementById('editDepartmentId').value = departmentId || '';
                     document.getElementById('editActive').checked = active;
-                    
+
                     // Clear all role checkboxes first
-                    document.querySelectorAll('.edit-role-checkbox').forEach(function(checkbox) {
+                    document.querySelectorAll('.edit-role-checkbox').forEach(function (checkbox) {
                         checkbox.checked = false;
                     });
-                    
+
                     // Check roles that user has
                     if (roleIds) {
                         const userRoleIds = roleIds.split(',');
-                        userRoleIds.forEach(function(roleId) {
+                        userRoleIds.forEach(function (roleId) {
                             const checkbox = document.querySelector('.edit-role-checkbox[value="' + roleId.trim() + '"]');
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
                         });
                     }
-                    
+
                     document.getElementById('editUserForm').action = '/admin/users/' + userId + '/update';
-                    
+
                     const modal = new bootstrap.Modal(document.getElementById('editModal'));
                     modal.show();
                 });

@@ -23,7 +23,12 @@
                         <h2 class="h4 mb-1">
                             <i class="bi bi-people-fill"></i> Quản lý công dân
                         </h2>
-                        <p class="text-muted mb-0">Quản lý công dân</p>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Home</a></li>
+                                <li class="breadcrumb-item active">Công dân</li>
+                            </ol>
+                        </nav>
                     </div>
                     <div class="d-flex gap-2">
                         <a th:href="@{/admin/citizens/export}" class="btn btn-outline-success">
@@ -56,6 +61,7 @@
                     </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
+                -->
                 <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="bi bi-check-circle-fill"></i>
                     <span th:text="${message}">Thao tác thành công!</span>
@@ -150,7 +156,7 @@
                                     <!-- Data Rows -->
                                     <tr th:each="citizen, iter : ${citizens}">
                                         <td>
-                                            <span th:text="${citizen.id}"></span>
+                                            <span th:text="${(currentPage - 1) * size + iter.count}">1</span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
@@ -190,19 +196,12 @@
                                                     th:href="@{'/admin/citizens/' + ${citizen.id} + '/edit'}">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <a class="btn btn-outline-danger" data-bs-toggle="tooltip"
-                                                    th:if="${citizen.active}" title="Vô hiệu hóa"
-                                                    onClick="return confirm('Bạn có chắc chắn muốn vô hiệu hóa công dân này không?');"
-                                                    th:href="@{'/admin/citizens/' + ${citizen.id} + '/toggle'}">
-                                                    <i class="bi bi-toggle-on "></i>
+                                                <a th:href="@{'/admin/citizens/' + ${citizen.id} + '/delete'}"
+                                                    class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Xóa"
+                                                    th:data-confirm-delete="|Bạn có chắc muốn xóa công dân ${citizen.fullName}?|"
+                                                    onclick="if (!confirm(this.getAttribute('data-confirm-delete'))) return false">
+                                                    <i class="bi bi-trash"></i>
                                                 </a>
-                                                <a class="btn btn-outline-warning" data-bs-toggle="tooltip"
-                                                    th:unless="${citizen.active}" title="Kích hoạt"
-                                                    th:href="@{'/admin/citizens/' + ${citizen.id} + '/toggle'}"
-                                                    onclick="return confirm('Bạn có chắc chắn muốn kích hoạt công dân này không?');">
-                                                    <i class="bi bi-toggle-off"></i>
-                                                </a>
-
                                             </div>
                                         </td>
                                     </tr>
@@ -362,7 +361,7 @@
     <div class="modal fade" id="importCitizenModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form th:action="@{/admincitizens/import}" method="post" enctype="multipart/form-data">
+                <form th:action="@{/admin/citizens/import}" method="post" enctype="multipart/form-data">
                     <div class="modal-header">
                         <h5 class="modal-title" id="importModalLabel">
                             <i class="bi bi-file-earmark-arrow-up text-primary"></i> Nhập dữ liệu công dân từ CSV

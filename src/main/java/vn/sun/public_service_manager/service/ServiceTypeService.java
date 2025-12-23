@@ -31,6 +31,7 @@ public class ServiceTypeService {
     public Optional<ServiceType> getServiceTypeById(Long id) {
         return serviceTypeRepository.findById(id);
     }
+
     @Transactional
     public ServiceType saveServiceType(ServiceType serviceType) {
 
@@ -108,22 +109,23 @@ public class ServiceTypeService {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
-            // Skip BOM if present
-            reader.mark(1);
-            if (reader.read() != 0xFEFF) {
-                reader.reset();
-            }
-
             // Read first line as header
             String headerLine = reader.readLine();
             if (headerLine == null) {
                 throw new RuntimeException("File CSV rỗng!");
             }
 
+            // Remove BOM if present
+            if (headerLine.startsWith("\uFEFF")) {
+                headerLine = headerLine.substring(1);
+            }
+
             // Validate header
             String expectedHeader = "category,description";
-            if (!headerLine.toLowerCase().startsWith(expectedHeader.toLowerCase())) {
-                throw new RuntimeException("File CSV không đúng định dạng! Cần có: " + expectedHeader);
+            String normalizedHeader = headerLine.toLowerCase().trim().replaceAll("\\s+", "");
+            if (!normalizedHeader.equals(expectedHeader.toLowerCase())) {
+                throw new RuntimeException(
+                        "File CSV không đúng định dạng! Cần có: " + expectedHeader + " nhưng nhận được: " + headerLine);
             }
 
             // Read data lines
@@ -206,15 +208,21 @@ public class ServiceTypeService {
             char ch = line.charAt(i);
 
             if (ch == '"') {
-                inQuotes = !inQuotes;
+                // Check for escaped quotes ("")
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    current.append('"');
+                    i++; // Skip next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
             } else if (ch == ',' && !inQuotes) {
-                result.add(current.toString());
+                result.add(current.toString().trim());
                 current = new StringBuilder();
             } else {
                 current.append(ch);
             }
         }
-        result.add(current.toString());
+        result.add(current.toString().trim());
 
         return result.toArray(new String[0]);
     }

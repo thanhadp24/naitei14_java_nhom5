@@ -43,4 +43,19 @@ public interface UserRespository extends JpaRepository<User, Long> {
 
         boolean existsByUsername(String username);
 
+        @Query("SELECT u FROM User u WHERE " +
+                "u.department IS NULL " +
+                "AND u.id NOT IN ( " +
+                "    SELECT d.leader.id FROM Department d " +
+                "    WHERE d.leader IS NOT NULL" +
+                ")")
+        List<User> findPotentialLeadersForNewDepartment();
+
+        @Query(value = "SELECT u.* FROM users u WHERE " +
+                "(u.department_id IS NULL OR u.department_id = :deptId) " +
+                "AND u.id NOT IN ( " +
+                "    SELECT d.leader_id FROM departments d " +
+                "    WHERE d.leader_id IS NOT NULL AND d.id <> :deptId" +
+                ")", nativeQuery = true)
+        List<User> findPotentialLeadersForUpdate(@Param("deptId") Long deptId);
 }

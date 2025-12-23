@@ -31,10 +31,12 @@
                             <i class="bi bi-building"></i> Danh sách phòng ban
                         </h5>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
+                            <button class="btn btn-success btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#createDepartmentModal">
                                 <i class="bi bi-plus-circle"></i> Thêm phòng ban
                             </button>
-                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#importModal">
                                 <i class="bi bi-upload"></i> Import CSV
                             </button>
                             <a th:href="@{/admin/departments/export}" class="btn btn-light btn-sm">
@@ -46,13 +48,15 @@
                         </div>
                     </div>
 
-                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show m-3"
+                        role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i>
                         <span th:text="${successMessage}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
 
-                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show m-3"
+                        role="alert">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
                         <span th:text="${errorMessage}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -86,18 +90,16 @@
                                         <td th:text="${dept.leader != null ? dept.leader.username : 'Chưa có'}"></td>
                                         <td th:text="${dept.address}"></td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary btn-edit-dept" 
-                                                    th:data-id="${dept.id}"
-                                                    th:data-code="${dept.code}"
-                                                    th:data-name="${dept.name}"
-                                                    th:data-address="${dept.address ?: ''}"
-                                                    th:data-leader-id="${dept.leader != null ? dept.leader.id : ''}"
-                                                    title="Chỉnh sửa">
+                                            <button class="btn btn-sm btn-outline-primary btn-edit-dept"
+                                                th:data-id="${dept.id}" th:data-code="${dept.code}"
+                                                th:data-name="${dept.name}" th:data-address="${dept.address ?: ''}"
+                                                th:data-leader-id="${dept.leader != null ? dept.leader.id : ''}"
+                                                title="Chỉnh sửa">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <form th:action="@{/admin/departments/{id}/delete(id=${dept.id})}" 
-                                                  method="post" style="display: inline;"
-                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa phòng ban này?')">
+                                            <form th:action="@{/admin/departments/{id}/delete(id=${dept.id})}"
+                                                method="post" style="display: inline;"
+                                                onsubmit="return confirm('Bạn có chắc chắn muốn xóa phòng ban này?')">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -112,19 +114,22 @@
                         <nav th:if="${totalPages > 1}" class="mt-4">
                             <ul class="pagination justify-content-center">
                                 <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/departments(page=${currentPage - 1}, size=${size})}">
+                                    <a class="page-link"
+                                        th:href="@{/admin/departments(page=${currentPage - 1}, size=${size})}">
                                         <i class="bi bi-chevron-left"></i> Trước
                                     </a>
                                 </li>
 
                                 <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
                                     th:classappend="${i == currentPage} ? 'active'">
-                                    <a class="page-link" th:href="@{/admin/departments(page=${i}, size=${size})}" th:text="${i}">
+                                    <a class="page-link" th:href="@{/admin/departments(page=${i}, size=${size})}"
+                                        th:text="${i}">
                                     </a>
                                 </li>
 
                                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/admin/departments(page=${currentPage + 1}, size=${size})}">
+                                    <a class="page-link"
+                                        th:href="@{/admin/departments(page=${currentPage + 1}, size=${size})}">
                                         Sau <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </li>
@@ -167,7 +172,8 @@
                             <label class="form-label">Trưởng phòng</label>
                             <select class="form-select" name="leaderId">
                                 <option value="">Chọn trưởng phòng</option>
-                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}"></option>
+                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}">
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -193,7 +199,8 @@
                 <form th:action="@{/admin/departments/import}" method="post" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> File CSV cần có 3 cột: <strong>code, name, address</strong>
+                            <i class="bi bi-info-circle"></i> File CSV cần có 3 cột: <strong>code, name,
+                                address</strong>
                             <br>Nếu mã phòng ban đã tồn tại, bản ghi sẽ bị bỏ qua.
                         </div>
                         <div class="mb-3">
@@ -239,7 +246,8 @@
                             <label class="form-label">Trưởng phòng</label>
                             <select class="form-select" id="editLeaderId" name="leaderId">
                                 <option value="">Chọn trưởng phòng</option>
-                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}"></option>
+                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}">
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -265,26 +273,53 @@
 
     <!-- Bootstrap JS -->
     <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Edit department buttons
-            document.querySelectorAll('.btn-edit-dept').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-edit-dept').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
                     const id = this.getAttribute('data-id');
                     const code = this.getAttribute('data-code');
                     const name = this.getAttribute('data-name');
-                    const address = this.getAttribute('data-address');
-                    const leaderId = this.getAttribute('data-leader-id');
-                    
+                    const address = this.getAttribute('data-address') || '';
+                    const leaderId = this.getAttribute('data-leader-id') || '';
+
+                    // Populate basic fields
                     document.getElementById('editDeptId').value = id;
                     document.getElementById('editCode').value = code;
                     document.getElementById('editName').value = name;
-                    document.getElementById('editAddress').value = address || '';
-                    document.getElementById('editLeaderId').value = leaderId || '';
-                    
+                    document.getElementById('editAddress').value = address;
+
+                    // Fetch potential leaders and populate select
+                    const select = document.getElementById('editLeaderId');
+                    select.innerHTML = '<option value="">Chọn trưởng phòng</option>';
+
+                    try {
+                        const resp = await fetch('/admin/departments/potential-leaders?deptId=' + encodeURIComponent(id), {
+                            cache: 'no-store'
+                        });
+
+                        if (!resp.ok) {
+                            console.error('Failed to load users:', resp.status, resp.statusText);
+                        } else {
+                            const users = await resp.json();
+                            console.log('Loaded users for leaders:', users);
+                            users.data.forEach(u => {
+                                const opt = document.createElement('option');
+                                opt.value = u.id;
+                                opt.textContent = u.username; // Sửa ở đây - chỉ dùng username
+                                if (String(u.id) === String(leaderId)) {
+                                    opt.selected = true;
+                                }
+                                select.appendChild(opt);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error loading users:', e);
+                    }
+
+                    // Set form action and show modal
                     document.getElementById('editDepartmentForm').action = '/admin/departments/' + id + '/update';
-                    
                     const modal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
                     modal.show();
                 });

@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,7 +27,17 @@ public class GlobalException {
         return ResponseEntity.status(404).body(response);
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleDisabledException(DisabledException ex) {
+        ApiResponseDTO<Object> response = new ApiResponseDTO<>();
+        response.setData(null);
+        response.setMessage("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.");
+        response.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
+        response.setStatus(HttpStatus.FORBIDDEN.value());
+        return ResponseEntity.status(403).body(response);
+    }
+
+    @ExceptionHandler(value = {BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<ApiResponseDTO<Object>> handleBadCredentialsException(BadCredentialsException ex) {
         ApiResponseDTO<Object> response = new ApiResponseDTO<>();
         response.setData(null);

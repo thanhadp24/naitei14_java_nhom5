@@ -49,22 +49,15 @@ public class CombinedUserDetailsService implements UserDetailsService {
 
         /* ================= CITIZEN ================= */
         Optional<Citizen> citizenOpt = citizenRepository.findByNationalId(identifier);
-        if (citizenOpt.isPresent()) {
-            Citizen citizen = citizenOpt.get();
+        Citizen citizen = citizenOpt.orElseThrow(() ->
+                new UsernameNotFoundException("User not found with id: " + identifier)
+        );
 
-            List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                    new SimpleGrantedAuthority("ROLE_CITIZEN"));
-
-            return new org.springframework.security.core.userdetails.User(
-                    citizen.getNationalId(),
-                    citizen.getPassword(),
-                    citizen.isActive(), // ✅ enabled
-                    true,
-                    true,
-                    true,
-                    authorities);
-        }
-
-        throw new UsernameNotFoundException("User not found with identifier: " + identifier);
+            return org.springframework.security.core.userdetails.User
+                    .withUsername(citizen.getNationalId())
+                    .password(citizen.getPassword())
+                    .authorities("ROLE_CITIZEN")
+                    .accountExpired(false).accountLocked(false).credentialsExpired(false).disabled(!citizen.isActive())
+                    .build();
     }
 }

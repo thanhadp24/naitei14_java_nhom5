@@ -2,10 +2,14 @@ package vn.sun.public_service_manager.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
 import vn.sun.public_service_manager.entity.Citizen;
 import vn.sun.public_service_manager.repository.CitizenRepository;
 import vn.sun.public_service_manager.service.CitizenService;
 import vn.sun.public_service_manager.service.JwtService;
+import vn.sun.public_service_manager.utils.annotation.ApiMessage;
 import vn.sun.public_service_manager.utils.annotation.LogActivity;
 import vn.sun.public_service_manager.dto.CitizenRegistrationDto;
 import vn.sun.public_service_manager.dto.JwtAuthResponse;
@@ -83,35 +87,24 @@ public class CitizenAuthController {
                                                                 "fullName", savedCitizen.getFullName(),
                                                                 "email", savedCitizen.getEmail())));
         }
-
-        // 2. API Đăng nhập
-        @LogActivity(action = "Citizen Login", targetType = "CITIZEN AUTH", description = "Đăng nhập hệ thống công dân")
         @PostMapping("/login")
-        public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+        @LogActivity(action = "Citizen Login", targetType = "CITIZEN AUTH", description = "Đăng nhập hệ thống công dân")
+        @ApiMessage("Đăng nhập thành công")
+        public ResponseEntity<?> login(@RequestBody @Valid LoginDto loginDto) {
                 try {
                         Authentication authentication = authenticationManager.authenticate(
-                                        new UsernamePasswordAuthenticationToken(loginDto.getNationalId(),
-                                                        loginDto.getPassword()));
+                                new UsernamePasswordAuthenticationToken(loginDto.getNationalId(),
+                                        loginDto.getPassword()));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
 
                         String token = jwtService.generateToken(loginDto.getNationalId());
                         return ResponseEntity.ok(new JwtAuthResponse(token));
-                } catch (org.springframework.security.authentication.DisabledException ex) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(Map.of("success", false, "message", "Tài khoản đã bị vô hiệu hóa"));
-                } catch (org.springframework.security.authentication.LockedException ex) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(Map.of("success", false, "message", "Tài khoản bị khoá"));
-                } catch (org.springframework.security.authentication.BadCredentialsException ex) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(Map.of("success", false, "message",
-                                                        "Tên đăng nhập hoặc mật khẩu không đúng"));
-                } catch (org.springframework.security.core.AuthenticationException ex) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(Map.of("success", false, "message", "Xác thực thất bại"));
-                } catch (Exception ex) {
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                        .body(Map.of("success", false, "message", "Lỗi server"));
+                } catch (BadCredentialsException ex) {
+                        throw new BadCredentialsException("Số định danh hoặc mật khẩu không chính xác.");
+                } catch (DisabledException ex) {
+                        throw new DisabledException("Tài khoản đã bị khóa. Vui lòng liên hệ cơ quan chức năng.");
+                } catch (AuthenticationException ex) {
+                        throw new BadCredentialsException("Lỗi xác thực hệ thống: " + ex.getMessage());
                 }
         }
 

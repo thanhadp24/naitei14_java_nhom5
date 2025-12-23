@@ -1,6 +1,8 @@
 package vn.sun.public_service_manager.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,15 +28,12 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/citizens")
-public class CitizenWebController {
+@RequiredArgsConstructor
+public class AdminCitizenController {
 
     private final CitizenService citizenService;
     private final UserManagementService userManagementService;
-
-    public CitizenWebController(CitizenService citizenService, UserManagementService userManagementService) {
-        this.citizenService = citizenService;
-        this.userManagementService = userManagementService;
-    }
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String index(
@@ -75,6 +74,10 @@ public class CitizenWebController {
 
         try {
             boolean isNew = citizen.getId() == null;
+            if(isNew) {
+                citizen.setPassword(passwordEncoder.encode(citizen.getPassword()));
+            }
+
             citizenService.save(citizen);
             ra.addFlashAttribute("message",
                     isNew ? "Thêm công dân thành công!" : "Cập nhật công dân thành công!");

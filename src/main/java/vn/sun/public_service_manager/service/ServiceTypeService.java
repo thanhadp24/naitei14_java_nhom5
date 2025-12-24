@@ -4,6 +4,10 @@ import vn.sun.public_service_manager.entity.ServiceType;
 import vn.sun.public_service_manager.exception.ResourceNotFoundException;
 import vn.sun.public_service_manager.repository.ServiceTypeRepository;
 import vn.sun.public_service_manager.repository.ServiceRepository;
+import vn.sun.public_service_manager.repository.DepartmentRepository;
+import vn.sun.public_service_manager.utils.SecurityUtil;
+import vn.sun.public_service_manager.entity.User;
+import vn.sun.public_service_manager.entity.Department;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,8 @@ public class ServiceTypeService {
 
     private final ServiceTypeRepository serviceTypeRepository;
     private final ServiceRepository serviceRepository;
+    private final DepartmentRepository departmentRepository;
+    private final SecurityUtil securityUtil;
 
     public List<ServiceType> getAllServiceTypes() {
         return serviceTypeRepository.findAll();
@@ -74,14 +80,14 @@ public class ServiceTypeService {
             writer.write('\ufeff');
 
             // Header
-            writer.write("ID,Category,Description\n");
+            writer.write("category,description,departmentCode\n");
 
             // Write data
             for (ServiceType serviceType : serviceTypes) {
-                writer.write(String.format("%d,%s,%s\n",
-                        serviceType.getId(),
+                writer.write(String.format("%s,%s,%s\n",
                         escapeCSV(serviceType.getCategory()),
-                        escapeCSV(serviceType.getDescription())));
+                        escapeCSV(serviceType.getDescription()),
+                        escapeCSV(serviceType.getDepartment().getCode())));
             }
 
             writer.flush();
@@ -91,9 +97,6 @@ public class ServiceTypeService {
         }
     }
 
-    /**
-     * Import service types from CSV file
-     */
     @Transactional
     public Map<String, Object> importServiceTypesFromCsv(MultipartFile file) throws IOException {
         List<String> errors = new ArrayList<>();
@@ -104,46 +107,44 @@ public class ServiceTypeService {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
-            // Read first line as header
             String headerLine = reader.readLine();
             if (headerLine == null) {
                 throw new RuntimeException("File CSV rỗng!");
             }
 
-            // Remove BOM if present
             if (headerLine.startsWith("\uFEFF")) {
                 headerLine = headerLine.substring(1);
             }
 
-            // Validate header
-            String expectedHeader = "category,description";
+            String expectedHeader = "category,description,departmentCode";
             String normalizedHeader = headerLine.toLowerCase().trim().replaceAll("\\s+", "");
             if (!normalizedHeader.equals(expectedHeader.toLowerCase())) {
                 throw new RuntimeException(
                         "File CSV không đúng định dạng! Cần có: " + expectedHeader + " nhưng nhận được: " + headerLine);
             }
 
-            // Read data lines
             String line;
             while ((line = reader.readLine()) != null) {
                 rowNumber++;
                 totalRows++;
 
                 if (line.trim().isEmpty()) {
-                    continue; // Skip empty lines
+                    continue;
                 }
 
                 try {
-                    // Parse CSV line (handle quoted values)
+
                     String[] values = parseCSVLine(line);
 
-                    if (values.length < 1) {
-                        errors.add("Dòng " + rowNumber + ": Thiếu dữ liệu bắt buộc (category)");
+                    if (values.length < 3) {
+                        errors.add("Dòng " + rowNumber
+                                + ": Thiếu dữ liệu bắt buộc (category, description, departmentCode)");
                         continue;
                     }
 
                     String category = values[0].trim();
-                    String description = values.length > 1 ? values[1].trim() : "";
+                    String description = values[1].trim();
+                    String departmentCode = values[2].trim();
 
                     // Validate required fields
                     if (category.isEmpty()) {
@@ -156,6 +157,19 @@ public class ServiceTypeService {
                         continue;
                     }
 
+                    if (departmentCode.isEmpty()) {
+                        errors.add("Dòng " + rowNumber + ": DepartmentCode không được để trống");
+                        continue;
+                    }
+
+                    // Find department by code
+                    var departmentOpt = departmentRepository.findByCode(departmentCode);
+                    if (departmentOpt.isEmpty()) {
+                        errors.add("Dòng " + rowNumber + ": DepartmentCode '" + departmentCode + "' không tồn tại");
+                        continue;
+                    }
+                    var department = departmentOpt.get();
+
                     // Check duplicate category
                     if (serviceTypeRepository.findByCategoryIgnoreCase(category).isPresent()) {
                         errors.add("Dòng " + rowNumber + ": Category '" + category + "' đã tồn tại");
@@ -166,6 +180,7 @@ public class ServiceTypeService {
                     ServiceType serviceType = new ServiceType();
                     serviceType.setCategory(category);
                     serviceType.setDescription(description);
+                    serviceType.setDepartment(department);
 
                     // Save service type
                     serviceTypeRepository.save(serviceType);

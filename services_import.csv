@@ -1,0 +1,6 @@
+code,name,serviceTypeId,fee,processingTime,description
+SVC001,Dịch vụ cấp giấy phép kinh doanh,1,500000,3,Cấp giấy phép kinh doanh cho doanh nghiệp
+SVC002,Dịch vụ đăng ký thuế,2,200000,1,Đăng ký mã số thuế cho cá nhân/doanh nghiệp
+SVC003,Dịch vụ cấp giấy khám sức khỏe,1,150000,2,Cấp giấy khám sức khỏe định kỳ
+SVC004,Dịch vụ đăng ký hộ khẩu,3,100000,5,Đăng ký thay đổi hộ khẩu thường trú
+SVC005,Dịch vụ cấp giấy phép xây dựng,1,1000000,7,Cấp giấy phép xây dựng công trình

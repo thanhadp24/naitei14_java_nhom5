@@ -1,0 +1,5 @@
+fullName,dob,gender,nationalId,address,phone,email
+Nguyen Van A,1990-01-30,MALE,123456789,123 Main Street,0123456789,a@example.com
+Tran Thi B,1985-05-15,FEMALE,987654321,456 Elm Street,0987654321,b@example.com
+Le Van C,1995-10-20,MALE,456789123,789 Oak Avenue,0345678901,c@example.com
+Pham Thi D,1980-03-10,FEMALE,321654987,321 Pine Road,0567890123,d@example.com

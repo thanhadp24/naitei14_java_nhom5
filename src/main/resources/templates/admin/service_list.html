@@ -29,7 +29,7 @@
                                 <a th:href="@{/admin/services/new}" class="btn btn-primary btn-sm">
                                     <i class="bi bi-plus-circle"></i> Tạo mới
                                 </a>
-                                <a th:href="@{/api/v1/admin/services/export}" class="btn btn-light btn-sm">
+                                <a th:href="@{/admin/services/export}" class="btn btn-light btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </a>
                                 <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
@@ -300,7 +300,7 @@
                 importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang import...';
             }
 
-            fetch('/api/v1/admin/services/import', {
+            fetch('/admin/services/import', {
                 method: 'POST',
                 body: formData
             })
@@ -323,12 +323,7 @@
                     let message = `
             <div class="alert alert-${alertClass}">
                 <i class="bi bi-${icon}"></i> 
-                <h6><strong>${title}</strong></h6>
-                <ul class="mb-2">
-                    <li>Tổng số dòng: <strong>${data.total}</strong></li>
-                    <li>Thành công: <strong class="text-success">${data.success}</strong></li>
-                    <li>Thất bại: <strong class="text-danger">${data.failed}</strong></li>
-                </ul>`;
+                <h6><strong>${title}</strong></h6>`;
 
                     // Show errors if any
                     if (data.errors && data.errors.length > 0) {

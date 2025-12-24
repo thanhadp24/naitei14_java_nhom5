@@ -98,9 +98,11 @@
                                     </h6>
                                     <ul class="mb-2">
                                         <li><strong>Định dạng:</strong> File CSV với encoding UTF-8</li>
-                                        <li><strong>Header:</strong> <code>category,description</code></li>
+                                        <li><strong>Header:</strong> <code>category,description,departmentCode</code>
+                                        </li>
                                         <li><strong>Category:</strong> Bắt buộc, tối đa 150 ký tự, không trùng lặp</li>
                                         <li><strong>Description:</strong> Tùy chọn, mô tả chi tiết về loại dịch vụ</li>
+                                        <li><strong>DepartmentCode:</strong> Bắt buộc, mã phòng ban phải tồn tại</li>
                                     </ul>
                                     <p class="mb-0"><strong>Lưu ý:</strong> Các category đã tồn tại sẽ bị bỏ qua.</p>
                                 </div>
@@ -184,7 +186,7 @@
                         importBtn.disabled = true;
                         importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang import...';
 
-                        fetch('/servicetypes/import', {
+                        fetch('/admin/servicetypes/import', {
                             method: 'POST',
                             body: formData
                         })
@@ -207,12 +209,7 @@
                                 let message = `
             <div class="alert alert-${alertClass}">
                 <i class="bi bi-${icon}"></i> 
-                <h6><strong>${title}</strong></h6>
-                <ul class="mb-2">
-                    <li>Tổng số dòng: <strong>${data.total}</strong></li>
-                    <li>Thành công: <strong class="text-success">${data.success}</strong></li>
-                    <li>Thất bại: <strong class="text-danger">${data.failed}</strong></li>
-                </ul>`;
+                <h6><strong>${title}</strong></h6>`;
 
                                 // Show errors if any
                                 if (data.errors && data.errors.length > 0) {
@@ -256,12 +253,12 @@
                     // Download CSV template
                     function downloadTemplate() {
                         const csvContent =
-                            `category,description
-Giấy tờ tùy thân,"Dịch vụ cấp các loại giấy tờ tùy thân như CMND, CCCD"
-Hộ khẩu,"Dịch vụ đăng ký thường trú, tạm trú"
-Hộ tịch,"Dịch vụ khai sinh, khai tử, đăng ký kết hôn"
-Đất đai,"Dịch vụ cấp sổ đỏ, giấy chứng nhận quyền sử dụng đất"
-Xây dựng,"Dịch vụ cấp phép xây dựng, sửa chữa nhà"`;
+                            `category,description,departmentCode
+Giấy tờ tùy thân,"Dịch vụ cấp các loại giấy tờ tùy thân như CMND, CCCD",PB001
+Hộ khẩu,"Dịch vụ đăng ký thường trú, tạm trú",PB002
+Hộ tịch,"Dịch vụ khai sinh, khai tử, đăng ký kết hôn",PB003
+Đất đai,"Dịch vụ cấp sổ đỏ, giấy chứng nhận quyền sử dụng đất",PB001
+Xây dựng,"Dịch vụ cấp phép xây dựng, sửa chữa nhà",PB004`;
 
                         // Create blob with UTF-8 BOM
                         const blob = new Blob(['\ufeff' + csvContent], {

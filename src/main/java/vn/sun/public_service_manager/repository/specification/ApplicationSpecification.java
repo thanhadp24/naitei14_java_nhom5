@@ -29,6 +29,9 @@ public class ApplicationSpecification {
             // Join with citizen
             Join<Application, Citizen> citizenJoin = root.join("citizen", JoinType.LEFT);
 
+            // Only get applications whose citizen is active
+            predicates.add(criteriaBuilder.equal(citizenJoin.get("active"), true));
+
             // Filter by status - only filter by the LATEST status using subquery
             if (filter.getStatus() != null) {
                 // Subquery to get the latest status ID for each application

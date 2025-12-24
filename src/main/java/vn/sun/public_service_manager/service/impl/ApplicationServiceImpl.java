@@ -188,11 +188,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         // 1. Tìm Entity Citizen để lấy ID (citizen_id)
         Citizen citizen = citizenRepository.findByNationalId(nationalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Citizen", "National ID", nationalId));
+        // If the citizen is disabled/inactive, return an empty page (hide applications)
+        if (citizen.isActive() == false) {
+            return Page.empty(pageable);
+        }
 
         Long citizenId = citizen.getId();
 
-        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId (fetch
-        // statuses)
+        // 2. Truy vấn cơ sở dữ liệu với phân trang và lọc theo citizenId (fetch statuses)
         Page<Application> applicationPage = applicationRepository.findByCitizenIdWithStatuses(citizenId, pageable);
 
         // 3. Chuyển đổi Page<Application> sang Page<ApplicationDTO>
@@ -282,9 +285,17 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationResApiDTO getApplicationDetail(Long id, Long citizenId) {
+        // Ensure the citizen exists and is active; if inactive deny access
+        vn.sun.public_service_manager.entity.Citizen citizen = citizenRepository.findById(citizenId)
+            .orElseThrow(() -> new ResourceNotFoundException("Citizen not found with id: " + citizenId));
+
+        if (citizen.isActive() == false) {
+            throw new ResourceNotFoundException("Hồ sơ không tồn tại hoặc bạn không có quyền truy cập.");
+        }
+
         Application application = applicationRepository.findByIdWithDetails(id, citizenId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Hồ sơ không tồn tại hoặc bạn không có quyền truy cập."));
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Hồ sơ không tồn tại hoặc bạn không có quyền truy cập."));
         return ApplicationResApiDTO.fromEntity(application);
     }
     
